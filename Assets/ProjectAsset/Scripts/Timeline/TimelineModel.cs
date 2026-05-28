@@ -91,18 +91,20 @@ namespace ProjectTimeline.Timeline
         public string targetId;
         public int startSlot; // Index of slot (0 to 4)
         public int effectiveSlot; // Where the action actually executes after delays (dynamic)
+        public bool isExclusive; // True: Main Action (cannot overlap), False: Free Action (can overlap)
         public ActionType actionType;
         public int value; // Damage amount, Shield amount, Delay slots
 
         public ActionNodeData() { }
 
-        public ActionNodeData(string id, string sourceId, string targetId, int startSlot, ActionType actionType, int value)
+        public ActionNodeData(string id, string sourceId, string targetId, int startSlot, ActionType actionType, int value, bool isExclusive = true)
         {
             this.id = id;
             this.sourceId = sourceId;
             this.targetId = targetId;
             this.startSlot = startSlot;
             this.effectiveSlot = startSlot; // Default to start slot
+            this.isExclusive = isExclusive;
             this.actionType = actionType;
             this.value = value;
         }
@@ -112,7 +114,7 @@ namespace ProjectTimeline.Timeline
         /// </summary>
         public ActionNodeData Clone()
         {
-            return new ActionNodeData(id, sourceId, targetId, startSlot, actionType, value)
+            return new ActionNodeData(id, sourceId, targetId, startSlot, actionType, value, isExclusive)
             {
                 effectiveSlot = this.effectiveSlot
             };
@@ -208,6 +210,30 @@ namespace ProjectTimeline.Timeline
                             other.effectiveSlot = Math.Min(TIMELINE_SLOTS, other.effectiveSlot + delay.node.value);
                             other.node.effectiveSlot = other.effectiveSlot;
                             simulationLog.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
+                        }
+                    }
+                }
+
+                // Check for conflicts: multiple exclusive actions on the same character at the same slot (Option A: Log only)
+                List<SimulatedNode> slotActions = simNodes.FindAll(n => !n.processed && n.effectiveSlot == slot);
+                HashSet<string> exclusiveUsers = new HashSet<string>();
+                HashSet<string> flaggedUsers = new HashSet<string>();
+                foreach (var node in slotActions)
+                {
+                    if (node.node.isExclusive)
+                    {
+                        if (exclusiveUsers.Contains(node.node.sourceId))
+                        {
+                            if (!flaggedUsers.Contains(node.node.sourceId))
+                            {
+                                flaggedUsers.Add(node.node.sourceId);
+                                string sourceName = GetName(node.node.sourceId);
+                                simulationLog.Add($"[Conflict Slot {slot}] {sourceName} cannot execute multiple exclusive actions!");
+                            }
+                        }
+                        else
+                        {
+                            exclusiveUsers.Add(node.node.sourceId);
                         }
                     }
                 }
