@@ -24,12 +24,7 @@ namespace ProjectTimeline.Timeline
 
         [Header("Timeline Actions Setup")]
         [Tooltip("Configure the sequence of actions scheduled on the timeline slots (0 to 4).")]
-        public List<ActionNodeData> timelineActions = new List<ActionNodeData>()
-        {
-            new ActionNodeData("enemy_atk", "enemy", "player", 1, ActionType.Attack, 20),
-            new ActionNodeData("player_def", "player", "player", 1, ActionType.Defend, 10),
-            new ActionNodeData("player_delay", "player", "enemy", 1, ActionType.Delay, 1)
-        };
+        public List<TimelineActionSetup> initialTimelineActions = new List<TimelineActionSetup>();
 
         [Header("Simulation Scrubbing Control")]
         [Range(0, 4)]
@@ -50,6 +45,10 @@ namespace ProjectTimeline.Timeline
         [SerializeField] private Image enemyShieldFill;
         [Space]
         [SerializeField] private TMP_Text simulationLogText;
+        [Space]
+        [Header("Timeline Slots Visualizers")]
+        [SerializeField] private List<TimelineSlotVisualizer> playerSlotVisualizers = new List<TimelineSlotVisualizer>();
+        [SerializeField] private List<TimelineSlotVisualizer> enemySlotVisualizers = new List<TimelineSlotVisualizer>();
 
         [Header("Visual Feedback (Avatars)")]
         [SerializeField] private SpriteRenderer playerSpriteRenderer;
@@ -100,8 +99,16 @@ namespace ProjectTimeline.Timeline
         /// </summary>
         private void OnValidate()
         {
+#if UNITY_EDITOR
+            // Guard against executing simulation loops during scene teardown or playmode transition phases
+            if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode && !Application.isPlaying)
+            {
+                return;
+            }
+#endif
+
             // Protect against accessing lists during editor deserialization/destruction states
-            if (baselineCharacters == null || timelineActions == null) return;
+            if (baselineCharacters == null || initialTimelineActions == null) return;
 
             RunSimulation();
         }
@@ -134,6 +141,29 @@ namespace ProjectTimeline.Timeline
         }
 
         /// <summary>
+        /// Exposes the active timeline model. Initializes MVVM layers if not already done.
+        /// </summary>
+        public TimelineModel Model
+        {
+            get
+            {
+                if (model == null)
+                {
+                    InitializeMVVM();
+                }
+                return model;
+            }
+        }
+
+        /// <summary>
+        /// Public wrapper to synchronize Inspector lists to the Model and run the simulation.
+        /// </summary>
+        public void SyncAndRunSimulation()
+        {
+            RunSimulation();
+        }
+
+        /// <summary>
         /// Synchronizes the Inspector's list data into the pure C# Model structures,
         /// then commands the ViewModel to perform scrubbing simulation.
         /// </summary>
@@ -157,17 +187,39 @@ namespace ProjectTimeline.Timeline
             // Sync actions (Segregate by sourceId to identify Player vs Enemy actions)
             model.enemyActions.Clear();
             model.playerActions.Clear();
-            foreach (var action in timelineActions)
+            for (int i = 0; i < initialTimelineActions.Count; i++)
             {
-                if (action == null || string.IsNullOrEmpty(action.id)) continue;
+                var setup = initialTimelineActions[i];
+                if (setup == null || setup.cardBlueprint == null) continue;
 
-                if (action.sourceId == "player")
+                // Deep copy/clone the inner payload
+                ActionNodeData clonedNode = setup.cardBlueprint.actionBlueprint.Clone();
+
+                // Ensure a valid ID exists
+                clonedNode.id = string.IsNullOrEmpty(clonedNode.id) ? setup.cardBlueprint.cardId : clonedNode.id;
+
+                // Inject the runtime parameters from the struct
+                clonedNode.startSlot = setup.startSlot;
+                clonedNode.effectiveSlot = setup.startSlot;
+
+                // If overrideSourceId is not empty, re-assign sourceId
+                clonedNode.sourceId = string.IsNullOrEmpty(setup.overrideSourceId) ? clonedNode.sourceId : setup.overrideSourceId;
+
+                // Generate or assign a unique instance ID
+                if (string.IsNullOrEmpty(setup.runtimeInstanceId))
                 {
-                    model.playerActions.Add(action);
+                    setup.runtimeInstanceId = clonedNode.id + "_" + i + "_" + System.Guid.NewGuid().ToString().Substring(0, 8);
+                }
+                clonedNode.id = setup.runtimeInstanceId;
+
+                // Sort and distribute based on finalized sourceId
+                if (clonedNode.sourceId == "player")
+                {
+                    model.playerActions.Add(clonedNode);
                 }
                 else
                 {
-                    model.enemyActions.Add(action);
+                    model.enemyActions.Add(clonedNode);
                 }
             }
 
@@ -210,6 +262,9 @@ namespace ProjectTimeline.Timeline
 
             // 6. Output to developer console for safety check
             LogToUnityConsole(logs, simulatedCharacters);
+
+            // 7. Update visual representations inside the timeline slot bars
+            UpdateSlotVisualizers();
         }
 
         #endregion
@@ -304,6 +359,96 @@ namespace ProjectTimeline.Timeline
             return null;
         }
 
+        private void UpdateSlotVisualizers()
+        {
+            if (model == null) return;
+
+            // Ensure lists are initialized
+            if (playerSlotVisualizers == null) playerSlotVisualizers = new List<TimelineSlotVisualizer>();
+            if (enemySlotVisualizers == null) enemySlotVisualizers = new List<TimelineSlotVisualizer>();
+
+            // Auto-discover if either list is empty
+            if (playerSlotVisualizers.Count == 0 || enemySlotVisualizers.Count == 0)
+            {
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+                var visualizers = FindObjectsByType<TimelineSlotVisualizer>(FindObjectsSortMode.None);
+#else
+                var visualizers = FindObjectsOfType<TimelineSlotVisualizer>();
+#endif
+                var discoveredPlayer = new List<TimelineSlotVisualizer>();
+                var discoveredEnemy = new List<TimelineSlotVisualizer>();
+
+                foreach (var vis in visualizers)
+                {
+                    if (vis == null) continue;
+
+                    string nameLower = vis.gameObject.name.ToLower();
+                    string parentNameLower = vis.transform.parent != null ? vis.transform.parent.gameObject.name.ToLower() : "";
+
+                    bool isPlayer = nameLower.Contains("player") || nameLower.Contains("hero") || 
+                                     parentNameLower.Contains("player") || parentNameLower.Contains("hero") ||
+                                     nameLower.Contains("p_") || parentNameLower.Contains("p_");
+                    
+                    bool isEnemy = nameLower.Contains("enemy") || nameLower.Contains("boss") || 
+                                    parentNameLower.Contains("enemy") || parentNameLower.Contains("boss") ||
+                                    nameLower.Contains("e_") || parentNameLower.Contains("e_");
+
+                    if (isPlayer)
+                    {
+                        discoveredPlayer.Add(vis);
+                    }
+                    else if (isEnemy)
+                    {
+                        discoveredEnemy.Add(vis);
+                    }
+                }
+
+                if (playerSlotVisualizers.Count == 0 && discoveredPlayer.Count > 0)
+                {
+                    discoveredPlayer.Sort((a, b) => a.slotIndex.CompareTo(b.slotIndex));
+                    playerSlotVisualizers = discoveredPlayer;
+                }
+
+                if (enemySlotVisualizers.Count == 0 && discoveredEnemy.Count > 0)
+                {
+                    discoveredEnemy.Sort((a, b) => a.slotIndex.CompareTo(b.slotIndex));
+                    enemySlotVisualizers = discoveredEnemy;
+                }
+            }
+
+            GameplayCardViewManager viewManager = null;
+#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
+            viewManager = FindFirstObjectByType<GameplayCardViewManager>();
+#else
+            viewManager = FindObjectOfType<GameplayCardViewManager>();
+#endif
+            CardTimelinePresenter presenter = viewManager != null ? viewManager.Presenter : null;
+
+            // 1. Update player slots
+            for (int i = 0; i < playerSlotVisualizers.Count; i++)
+            {
+                var vis = playerSlotVisualizers[i];
+                if (vis != null)
+                {
+                    int index = vis.slotIndex;
+                    List<ActionNodeData> playerActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId == "player");
+                    vis.RefreshSlot(playerActions, presenter, initialTimelineActions);
+                }
+            }
+
+            // 2. Update enemy slots
+            for (int i = 0; i < enemySlotVisualizers.Count; i++)
+            {
+                var vis = enemySlotVisualizers[i];
+                if (vis != null)
+                {
+                    int index = vis.slotIndex;
+                    List<ActionNodeData> enemyActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId != "player");
+                    vis.RefreshSlot(enemyActions, presenter, initialTimelineActions);
+                }
+            }
+        }
+
         #endregion
 
         #region Visual Effects (Coroutines)
@@ -378,5 +523,14 @@ namespace ProjectTimeline.Timeline
         }
 
         #endregion
+    }
+
+    [System.Serializable]
+    public class TimelineActionSetup
+    {
+        public CardDataBlueprint cardBlueprint;
+        [Range(0, 4)] public int startSlot;
+        public string overrideSourceId;
+        [HideInInspector] public string runtimeInstanceId; // hidden field to retain runtime IDs
     }
 }
