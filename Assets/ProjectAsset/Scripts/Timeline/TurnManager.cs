@@ -80,7 +80,9 @@ namespace ProjectTimeline.Timeline
             for (int i = 0; i < timelineBridge.baselineCharacters.Count; i++)
             {
                 var charData = timelineBridge.baselineCharacters[i];
-                if (charData != null && model.baselineCharacters.TryGetValue(charData.id, out var committedChar))
+                if (charData != null && 
+                    System.Enum.TryParse<CharacterID>(charData.id, true, out CharacterID characterEnum) &&
+                    model.baselineCharacters.TryGetValue(characterEnum, out var committedChar))
                 {
                     timelineBridge.baselineCharacters[i] = committedChar.Clone();
                 }

@@ -79,7 +79,7 @@ namespace ProjectTimeline.Timeline
                 bool foundInfo = false;
 
                 // 1. Search player collections (if source is player)
-                if (action.sourceId == "player" && presenter != null)
+                if (action.sourceId == CharacterID.Player && presenter != null)
                 {
                     RuntimeCardInstance card = null;
 
@@ -153,7 +153,7 @@ namespace ProjectTimeline.Timeline
                 // 3. Fallbacks if name/icon not found
                 if (!foundInfo)
                 {
-                    if (action.sourceId == "player")
+                    if (action.sourceId == CharacterID.Player)
                     {
                         displayName = $"Player {action.actionType}";
                     }

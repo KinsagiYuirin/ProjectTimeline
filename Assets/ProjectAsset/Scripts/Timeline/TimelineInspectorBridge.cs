@@ -180,7 +180,10 @@ namespace ProjectTimeline.Timeline
             {
                 if (character != null && !string.IsNullOrEmpty(character.id))
                 {
-                    model.baselineCharacters[character.id] = character;
+                    if (System.Enum.TryParse<CharacterID>(character.id, true, out CharacterID characterEnum))
+                    {
+                        model.baselineCharacters[characterEnum] = character;
+                    }
                 }
             }
 
@@ -202,9 +205,6 @@ namespace ProjectTimeline.Timeline
                 clonedNode.startSlot = setup.startSlot;
                 clonedNode.effectiveSlot = setup.startSlot;
 
-                // If overrideSourceId is not empty, re-assign sourceId
-                clonedNode.sourceId = string.IsNullOrEmpty(setup.overrideSourceId) ? clonedNode.sourceId : setup.overrideSourceId;
-
                 // Generate or assign a unique instance ID
                 if (string.IsNullOrEmpty(setup.runtimeInstanceId))
                 {
@@ -213,7 +213,7 @@ namespace ProjectTimeline.Timeline
                 clonedNode.id = setup.runtimeInstanceId;
 
                 // Sort and distribute based on finalized sourceId
-                if (clonedNode.sourceId == "player")
+                if (clonedNode.sourceId == CharacterID.Player)
                 {
                     model.playerActions.Add(clonedNode);
                 }
@@ -243,7 +243,7 @@ namespace ProjectTimeline.Timeline
         /// <summary>
         /// Event handler triggered by the ViewModel. Synchronizes texts, bars, slider, and triggers visual flashes.
         /// </summary>
-        private void OnTimelineSimulationUpdated(Dictionary<string, CharacterData> simulatedCharacters, List<string> logs)
+        private void OnTimelineSimulationUpdated(Dictionary<CharacterID, CharacterData> simulatedCharacters, List<string> logs)
         {
             // 1. Reset sprite renderer colors to prevent visual locks
             ResetSpriteColors();
@@ -277,10 +277,10 @@ namespace ProjectTimeline.Timeline
             if (enemySpriteRenderer != null) enemySpriteRenderer.color = Color.white;
         }
 
-        private void UpdateCharacterUI(Dictionary<string, CharacterData> simulatedCharacters)
+        private void UpdateCharacterUI(Dictionary<CharacterID, CharacterData> simulatedCharacters)
         {
             // Sync Player UI
-            if (simulatedCharacters.TryGetValue("player", out CharacterData player))
+            if (simulatedCharacters.TryGetValue(CharacterID.Player, out CharacterData player))
             {
                 if (playerHpText != null) playerHpText.text = $"HP: {player.currentHp} / {player.maxHp}";
                 if (playerShieldText != null) playerShieldText.text = $"Shield: {player.shield}";
@@ -289,7 +289,7 @@ namespace ProjectTimeline.Timeline
             }
 
             // Sync Enemy UI
-            if (simulatedCharacters.TryGetValue("enemy", out CharacterData enemy))
+            if (simulatedCharacters.TryGetValue(CharacterID.Enemy, out CharacterData enemy))
             {
                 if (enemyHpText != null) enemyHpText.text = $"HP: {enemy.currentHp} / {enemy.maxHp}";
                 if (enemyShieldText != null) enemyShieldText.text = $"Shield: {enemy.shield}";
@@ -352,10 +352,10 @@ namespace ProjectTimeline.Timeline
             }
         }
 
-        private SpriteRenderer GetSpriteRenderer(string characterId)
+        private SpriteRenderer GetSpriteRenderer(CharacterID characterId)
         {
-            if (characterId == "player") return playerSpriteRenderer;
-            if (characterId == "enemy") return enemySpriteRenderer;
+            if (characterId == CharacterID.Player) return playerSpriteRenderer;
+            if (characterId == CharacterID.Enemy) return enemySpriteRenderer;
             return null;
         }
 
@@ -431,7 +431,7 @@ namespace ProjectTimeline.Timeline
                 if (vis != null)
                 {
                     int index = vis.slotIndex;
-                    List<ActionNodeData> playerActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId == "player");
+                    List<ActionNodeData> playerActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId == CharacterID.Player);
                     vis.RefreshSlot(playerActions, presenter, initialTimelineActions);
                 }
             }
@@ -443,7 +443,7 @@ namespace ProjectTimeline.Timeline
                 if (vis != null)
                 {
                     int index = vis.slotIndex;
-                    List<ActionNodeData> enemyActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId != "player");
+                    List<ActionNodeData> enemyActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId != CharacterID.Player);
                     vis.RefreshSlot(enemyActions, presenter, initialTimelineActions);
                 }
             }
@@ -505,7 +505,7 @@ namespace ProjectTimeline.Timeline
 
         #region Console Logging
 
-        private void LogToUnityConsole(List<string> logs, Dictionary<string, CharacterData> simulatedCharacters)
+        private void LogToUnityConsole(List<string> logs, Dictionary<CharacterID, CharacterData> simulatedCharacters)
         {
             string output = $"<b>[MVVM Timeline Bridge] Recalculated up to Slot {targetScrubSlot}</b>\n";
             output += "================ SIMULATION LOGS ==============\n";
@@ -530,7 +530,6 @@ namespace ProjectTimeline.Timeline
     {
         public CardDataBlueprint cardBlueprint;
         [Range(0, 4)] public int startSlot;
-        public string overrideSourceId;
         [HideInInspector] public string runtimeInstanceId; // hidden field to retain runtime IDs
     }
 }

@@ -136,7 +136,6 @@ namespace ProjectTimeline.Timeline
                     {
                         cardBlueprint = cardItem.CardInstance.blueprint,
                         startSlot = slot,
-                        overrideSourceId = playedAction.sourceId,
                         runtimeInstanceId = playedAction.id
                     });
                 }

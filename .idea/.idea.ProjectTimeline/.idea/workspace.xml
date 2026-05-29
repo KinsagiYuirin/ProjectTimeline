@@ -5,11 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="43953c56-f3ba-4157-a124-62fcfedcb6f3" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Assets/Settings/UniversalRP.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/UniversalRP.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ShaderGraphSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ShaderGraphSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/URPProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/URPProjectSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ProjectTimeline/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ProjectTimeline/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/Card/CardTimelinePresenter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/Card/CardTimelinePresenter.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardViewManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardViewManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineInspectorBridge.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineInspectorBridge.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineSlotVisualizer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineSlotVisualizer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TurnManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TurnManager.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,6 +150,7 @@
       <workItem from="1779437375011" duration="842000" />
       <workItem from="1779441563155" duration="671000" />
       <workItem from="1779443732060" duration="20000" />
+      <workItem from="1780027659458" duration="2243000" />
     </task>
     <servers />
   </component>

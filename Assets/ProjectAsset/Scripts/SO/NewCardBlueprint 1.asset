@@ -19,8 +19,8 @@ MonoBehaviour:
   icon: {fileID: 6292415348255532922, guid: 60f4612c448a1664b90ac7134e391ae0, type: 3}
   actionBlueprint:
     id: 2
-    sourceId: 2
-    targetId: player
+    sourceId: 1
+    targetId: 0
     startSlot: 1
     effectiveSlot: 1
     isExclusive: 0

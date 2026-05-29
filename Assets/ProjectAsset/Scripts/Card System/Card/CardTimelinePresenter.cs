@@ -117,7 +117,7 @@ namespace ProjectTimeline.Timeline
             timelineAction.id = card.instanceId; // Bind action node to card instance unique ID
             timelineAction.startSlot = targetSlot;
             timelineAction.effectiveSlot = targetSlot;
-            timelineAction.sourceId = "player"; // Player card action
+            timelineAction.sourceId = CharacterID.Player; // Player card action
 
             timeline.playerActions.Add(timelineAction);
 

@@ -13,7 +13,7 @@ namespace ProjectTimeline.Timeline
         public TimelineModel Model { get; }
 
         // Event fired whenever simulation parameters change, pushing simulated character states and logs to the View
-        public event Action<Dictionary<string, CharacterData>, List<string>> OnTimelineUpdated;
+        public event Action<Dictionary<CharacterID, CharacterData>, List<string>> OnTimelineUpdated;
 
         public TimelineViewModel()
         {

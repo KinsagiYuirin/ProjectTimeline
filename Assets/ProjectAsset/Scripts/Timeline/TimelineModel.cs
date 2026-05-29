@@ -13,6 +13,12 @@ namespace ProjectTimeline.Timeline
         Delay
     }
 
+    public enum CharacterID
+    {
+        Player,
+        Enemy
+    }
+
     /// <summary>
     /// Model representation of a combatant's attributes.
     /// Marked serializable so it can be exposed and configured directly inside the Unity Inspector.
@@ -87,8 +93,8 @@ namespace ProjectTimeline.Timeline
     public class ActionNodeData
     {
         public string id;
-        public string sourceId;
-        public string targetId;
+        public CharacterID sourceId;
+        public CharacterID targetId;
         public int startSlot; // Index of slot (0 to 4)
         public int effectiveSlot; // Where the action actually executes after delays (dynamic)
         public bool isExclusive; // True: Main Action (cannot overlap), False: Free Action (can overlap)
@@ -97,7 +103,7 @@ namespace ProjectTimeline.Timeline
 
         public ActionNodeData() { }
 
-        public ActionNodeData(string id, string sourceId, string targetId, int startSlot, ActionType actionType, int value, bool isExclusive = true)
+        public ActionNodeData(string id, CharacterID sourceId, CharacterID targetId, int startSlot, ActionType actionType, int value, bool isExclusive = true)
         {
             this.id = id;
             this.sourceId = sourceId;
@@ -130,10 +136,10 @@ namespace ProjectTimeline.Timeline
         public const int TIMELINE_SLOTS = 5;
 
         // Baseline (start-of-turn) snapshot of combatants
-        public Dictionary<string, CharacterData> baselineCharacters = new Dictionary<string, CharacterData>();
+        public Dictionary<CharacterID, CharacterData> baselineCharacters = new Dictionary<CharacterID, CharacterData>();
         
         // Computed preview state at the playhead position
-        public Dictionary<string, CharacterData> simulatedCharacters = new Dictionary<string, CharacterData>();
+        public Dictionary<CharacterID, CharacterData> simulatedCharacters = new Dictionary<CharacterID, CharacterData>();
 
         // Lists of telegraphed actions and player played cards
         public List<ActionNodeData> enemyActions = new List<ActionNodeData>();
@@ -216,24 +222,19 @@ namespace ProjectTimeline.Timeline
 
                 // Check for conflicts: multiple exclusive actions on the same character at the same slot (Option A: Log only)
                 List<SimulatedNode> slotActions = simNodes.FindAll(n => !n.processed && n.effectiveSlot == slot);
-                HashSet<string> exclusiveUsers = new HashSet<string>();
-                HashSet<string> flaggedUsers = new HashSet<string>();
+                HashSet<CharacterID> exclusiveUsers = new HashSet<CharacterID>();
+                HashSet<CharacterID> flaggedUsers = new HashSet<CharacterID>();
                 foreach (var node in slotActions)
                 {
                     if (node.node.isExclusive)
                     {
-                        if (exclusiveUsers.Contains(node.node.sourceId))
+                        if (!exclusiveUsers.Add(node.node.sourceId))
                         {
-                            if (!flaggedUsers.Contains(node.node.sourceId))
+                            if (flaggedUsers.Add(node.node.sourceId))
                             {
-                                flaggedUsers.Add(node.node.sourceId);
                                 string sourceName = GetName(node.node.sourceId);
                                 simulationLog.Add($"[Conflict Slot {slot}] {sourceName} cannot execute multiple exclusive actions!");
                             }
-                        }
-                        else
-                        {
-                            exclusiveUsers.Add(node.node.sourceId);
                         }
                     }
                 }
@@ -283,13 +284,13 @@ namespace ProjectTimeline.Timeline
             }
         }
 
-        private string GetName(string id)
+        private string GetName(CharacterID id)
         {
             if (baselineCharacters.TryGetValue(id, out var character))
             {
                 return character.name;
             }
-            return id;
+            return id.ToString();
         }
     }
 }
