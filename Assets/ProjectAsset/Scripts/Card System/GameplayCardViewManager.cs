@@ -149,5 +149,44 @@ namespace ProjectTimeline.Timeline
 
             return success;
         }
+
+        /// <summary>
+        /// Recalls a played card from the timeline back into the player's hand during the Planning phase.
+        /// Delegates state mutation to the presenter, removes the corresponding inspector action entry,
+        /// and commands the bridge to redraw all slot visuals.
+        /// </summary>
+        /// <param name="cardInstanceId">The unique runtime instance ID of the card icon that was clicked.</param>
+        public void RecallCardFromSlot(string cardInstanceId)
+        {
+            if (string.IsNullOrEmpty(cardInstanceId))
+            {
+                Debug.LogWarning("[GameplayCardViewManager] RecallCardFromSlot called with a null/empty instance ID.");
+                return;
+            }
+
+            if (presenter == null || timelineBridge == null)
+            {
+                Debug.LogWarning("[GameplayCardViewManager] RecallCardFromSlot aborted – presenter or timelineBridge is null.");
+                return;
+            }
+
+            // 1. Delegate all card-state changes to the presenter layer
+            bool success = presenter.TryRecallCardFromTimeline(cardInstanceId, timelineBridge.Model);
+
+            if (!success)
+            {
+                Debug.LogWarning($"[GameplayCardViewManager] Recall failed for card id '{cardInstanceId}'. Card not found in discard pile.");
+                return;
+            }
+
+            // 2. Remove the matching entry from the inspector action list
+            //    so the slot doesn't re-appear after the next SyncAndRunSimulation call
+            timelineBridge.initialTimelineActions.RemoveAll(a => a.runtimeInstanceId == cardInstanceId);
+
+            // 3. Trigger a full bridge refresh to redraw slot visuals, health bars, and logs
+            timelineBridge.SyncAndRunSimulation();
+
+            Debug.Log($"[GameplayCardViewManager] Card '{cardInstanceId}' successfully recalled to hand.");
+        }
     }
 }

@@ -108,6 +108,40 @@ namespace ProjectTimeline.Timeline
                 return false;
             }
 
+            // 3.5 Slot Occupancy and Exclusivity Validation
+            bool playingIsExclusive = card.blueprint.actionBlueprint.isExclusive;
+
+            if (playingIsExclusive)
+            {
+                // Main Action validation: Cannot occupy slot if there's already an exclusive action
+                foreach (var existingAction in timeline.playerActions)
+                {
+                    if (existingAction.startSlot == targetSlot && existingAction.isExclusive)
+                    {
+                        UnityEngine.Debug.LogWarning($"[Presenter] Cannot play card; Slot {targetSlot} is already occupied.");
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                // Free Action validation: Count existing free actions in this slot
+                int existingFreeActionsCount = 0;
+                foreach (var existingAction in timeline.playerActions)
+                {
+                    if (existingAction.startSlot == targetSlot && !existingAction.isExclusive)
+                    {
+                        existingFreeActionsCount++;
+                    }
+                }
+
+                if (existingFreeActionsCount >= 1)
+                {
+                    UnityEngine.Debug.LogWarning($"[Presenter] Slot {targetSlot} already contains a Free Action. Maximum 1 Free Action allowed per slot.");
+                    return false;
+                }
+            }
+
             // 4. Spend energy resource
             CurrentEnergy -= card.blueprint.energyCost;
             OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
@@ -117,6 +151,7 @@ namespace ProjectTimeline.Timeline
             timelineAction.id = card.instanceId; // Bind action node to card instance unique ID
             timelineAction.startSlot = targetSlot;
             timelineAction.effectiveSlot = targetSlot;
+            timelineAction.isExclusive = playingIsExclusive; // Retain blueprint's exclusivity status
             timelineAction.sourceId = CharacterID.Player; // Player card action
 
             timeline.playerActions.Add(timelineAction);
@@ -129,6 +164,55 @@ namespace ProjectTimeline.Timeline
             timeline.SimulateUpTo(TimelineModel.TIMELINE_SLOTS - 1);
 
             UnityEngine.Debug.Log($"[Presenter] Successfully played '{card.blueprint.cardName}' at Slot {targetSlot}. Energy remaining: {CurrentEnergy}.");
+            return true;
+        }
+
+        /// <summary>
+        /// Recalls a previously played card back from the timeline into the player's hand.
+        /// Refunds its energy cost, removes its action node from the model, and
+        /// fires the appropriate view-update events.
+        /// </summary>
+        /// <param name="cardInstanceId">The unique runtime instance ID of the card to recall.</param>
+        /// <param name="timeline">The active simulation model to remove the action node from.</param>
+        /// <returns>True if the card was found and successfully recalled; otherwise false.</returns>
+        public bool TryRecallCardFromTimeline(string cardInstanceId, TimelineModel timeline)
+        {
+            if (string.IsNullOrEmpty(cardInstanceId) || timeline == null || Collection == null)
+                return false;
+
+            // 1. Locate the card in the discard pile (played cards always live here)
+            RuntimeCardInstance card = null;
+            foreach (var c in Collection.DiscardPile)
+            {
+                if (c.instanceId == cardInstanceId)
+                {
+                    card = c;
+                    break;
+                }
+            }
+
+            if (card == null)
+            {
+                UnityEngine.Debug.LogWarning($"[Presenter] TryRecallCardFromTimeline: card '{cardInstanceId}' not found in DiscardPile.");
+                return false;
+            }
+
+            // 2. Refund energy – clamp to MaxEnergy so we never exceed the cap
+            int refund = card.blueprint.energyCost;
+            CurrentEnergy = UnityEngine.Mathf.Min(CurrentEnergy + refund, MaxEnergy);
+            OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
+
+            // 3. Move card from discard pile back into the hand
+            Collection.MoveToHand(card);
+            OnHandChanged?.Invoke(new List<RuntimeCardInstance>(Collection.Hand));
+
+            // 4. Remove the corresponding action node from the timeline
+            timeline.playerActions.RemoveAll(a => a.id == cardInstanceId);
+
+            // 5. Recalculate the simulation preview so all visuals stay consistent
+            timeline.SimulateUpTo(TimelineModel.TIMELINE_SLOTS - 1);
+
+            UnityEngine.Debug.Log($"[Presenter] Recalled '{card.blueprint.cardName}' (id: {cardInstanceId}). Energy refunded: +{refund} → {CurrentEnergy}/{MaxEnergy}.");
             return true;
         }
     }

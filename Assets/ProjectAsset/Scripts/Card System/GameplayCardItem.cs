@@ -127,14 +127,15 @@ namespace ProjectTimeline.Timeline
         {
             if (rectTransform != null && mainCanvas != null)
             {
+                RectTransform canvasRect = mainCanvas.GetComponent<RectTransform>();
+
                 if (mainCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
                 {
                     transform.position = eventData.position;
                 }
                 else
                 {
-                    Vector3 worldPos;
-                    if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, eventData.pressEventCamera, out worldPos))
+                    if (RectTransformUtility.ScreenPointToWorldPointInRectangle(canvasRect, eventData.position, eventData.pressEventCamera, out var worldPos))
                     {
                         transform.position = worldPos;
                     }

@@ -83,6 +83,22 @@ namespace ProjectTimeline.Timeline
         }
 
         /// <summary>
+        /// Moves a card from the discard pile back to the hand (used by the recall mechanic).
+        /// </summary>
+        public bool MoveToHand(RuntimeCardInstance card)
+        {
+            if (card == null) return false;
+
+            if (discardPile.Remove(card))
+            {
+                hand.Add(card);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Moves a played card from the hand to the discard pile.
         /// </summary>
         public void MoveToDiscard(RuntimeCardInstance card)

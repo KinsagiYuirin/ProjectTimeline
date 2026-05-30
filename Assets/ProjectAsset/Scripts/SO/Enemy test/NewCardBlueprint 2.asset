@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a838f6b64a5e1f42ad22fe5a31be941, type: 3}
-  m_Name: NewCardBlueprint 1
+  m_Name: NewCardBlueprint 2
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.CardDataBlueprint
   cardId: 2
-  cardName: Attack
-  cardDescription: Attack 10 Damage
-  energyCost: 0
+  cardName: Defense
+  cardDescription: Add 20 Armor
+  energyCost: 1
   icon: {fileID: 6292415348255532922, guid: 60f4612c448a1664b90ac7134e391ae0, type: 3}
   actionBlueprint:
-    id: 2
+    id: 3
     sourceId: 1
-    targetId: 0
+    targetId: 1
     startSlot: 1
     effectiveSlot: 1
-    isExclusive: 0
-    actionType: 0
-    value: 50
+    isExclusive: 1
+    actionType: 1
+    value: 20

@@ -20,14 +20,49 @@ namespace ProjectTimeline.Timeline
         private GameObject playedCardIconPrefab;
 
         [SerializeField] 
-        [Tooltip("The container transform where icons will be spawned. Defaults to this transform if null.")]
-        private Transform iconContainer;
+        [Tooltip("Upper row container transform where Main Actions (isExclusive == true) are spawned.")]
+        private Transform mainActionContainer;
+
+        [SerializeField]
+        [Tooltip("Lower row container transform where Free Actions (isExclusive == false) are spawned.")]
+        private Transform freeActionContainer;
 
         private void Awake()
         {
-            if (iconContainer == null)
+            if (mainActionContainer == null)
             {
-                iconContainer = transform;
+                mainActionContainer = transform;
+            }
+            if (freeActionContainer == null)
+            {
+                freeActionContainer = transform;
+            }
+        }
+
+        /// <summary>
+        /// Clears all child game objects from the target container transform safely.
+        /// </summary>
+        private void ClearContainer(Transform container)
+        {
+            if (container == null) return;
+            List<Transform> childrenToDestroy = new List<Transform>();
+            foreach (Transform child in container)
+            {
+                if (child != null)
+                {
+                    childrenToDestroy.Add(child);
+                }
+            }
+            foreach (var child in childrenToDestroy)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(child.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
             }
         }
 
@@ -40,29 +75,8 @@ namespace ProjectTimeline.Timeline
         public void RefreshSlot(List<ActionNodeData> actions, CardTimelinePresenter presenter, List<TimelineActionSetup> inspectorSetups = null)
         {
             // Clear current spawned icons safely in both Play Mode and Edit Mode
-            if (iconContainer != null)
-            {
-                List<Transform> childrenToDestroy = new List<Transform>();
-                foreach (Transform child in iconContainer)
-                {
-                    if (child != null)
-                    {
-                        childrenToDestroy.Add(child);
-                    }
-                }
-
-                foreach (var child in childrenToDestroy)
-                {
-                    if (Application.isPlaying)
-                    {
-                        Destroy(child.gameObject);
-                    }
-                    else
-                    {
-                        DestroyImmediate(child.gameObject);
-                    }
-                }
-            }
+            ClearContainer(mainActionContainer);
+            ClearContainer(freeActionContainer);
 
             if (playedCardIconPrefab == null || actions == null) return;
 
@@ -70,7 +84,8 @@ namespace ProjectTimeline.Timeline
             {
                 if (action == null) continue;
 
-                GameObject iconObj = Instantiate(playedCardIconPrefab, iconContainer);
+                Transform parentContainer = action.isExclusive ? mainActionContainer : freeActionContainer;
+                GameObject iconObj = Instantiate(playedCardIconPrefab, parentContainer);
                 PlayedCardIconUI iconUI = iconObj.GetComponent<PlayedCardIconUI>();
                 if (iconUI == null) continue;
 
@@ -163,7 +178,10 @@ namespace ProjectTimeline.Timeline
                     }
                 }
 
-                iconUI.Setup(displayName, displayIcon);
+                // Pass the instance ID and player-ownership flag so the icon can
+                // identify itself during recall and validate click permissions.
+                bool playerOwned = action.sourceId == CharacterID.Player;
+                iconUI.Setup(displayName, displayIcon, action.id, playerOwned);
             }
         }
     }
