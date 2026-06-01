@@ -19,6 +19,12 @@ namespace ProjectTimeline.Timeline
         Enemy
     }
 
+    public enum DelayTargetMode
+    {
+        ByActionType,     // Original: Delays only the matching ActionType (e.g. Attack only)
+        AllActionsInSlot   // New Option: Delays every action belonging to the target in that slot
+    }
+
     /// <summary>
     /// Model representation of a combatant's attributes.
     /// Marked serializable so it can be exposed and configured directly inside the Unity Inspector.
@@ -101,6 +107,11 @@ namespace ProjectTimeline.Timeline
         public ActionType actionType;
         public int value; // Damage amount, Shield amount, Delay slots
 
+        // Targeted Delay fields
+        public bool isTargetedDelay;
+        public ActionType targetActionType;
+        public DelayTargetMode delayTargetMode = DelayTargetMode.ByActionType;
+
         public ActionNodeData() { }
 
         public ActionNodeData(string id, CharacterID sourceId, CharacterID targetId, int startSlot, ActionType actionType, int value, bool isExclusive = true)
@@ -122,7 +133,10 @@ namespace ProjectTimeline.Timeline
         {
             return new ActionNodeData(id, sourceId, targetId, startSlot, actionType, value, isExclusive)
             {
-                effectiveSlot = this.effectiveSlot
+                effectiveSlot = this.effectiveSlot,
+                isTargetedDelay = this.isTargetedDelay,
+                targetActionType = this.targetActionType,
+                delayTargetMode = this.delayTargetMode
             };
         }
     }
@@ -204,18 +218,52 @@ namespace ProjectTimeline.Timeline
                     delay.processed = true;
                     string src = GetName(delay.node.sourceId);
                     string tgt = GetName(delay.node.targetId);
-                    simulationLog.Add($"  -> [DELAY] {src} delays {tgt} by {delay.node.value} slots.");
 
-                    foreach (var other in simNodes)
+                    if (delay.node.isTargetedDelay)
                     {
-                        if (!other.processed && 
-                            other.node.sourceId == delay.node.targetId && 
-                            other.effectiveSlot >= slot)
+                        simulationLog.Add($"  -> [TARGETED DELAY] {src} targeted delay resolved at slot {slot} (Mode: {delay.node.delayTargetMode}, targets CharacterID.{delay.node.targetId}).");
+
+                        foreach (var other in simNodes)
                         {
-                            int oldSlot = other.effectiveSlot;
-                            other.effectiveSlot = Math.Min(TIMELINE_SLOTS, other.effectiveSlot + delay.node.value);
-                            other.node.effectiveSlot = other.effectiveSlot;
-                            simulationLog.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
+                            if (!other.processed && 
+                                other.effectiveSlot == slot && 
+                                other.node.sourceId == delay.node.targetId)
+                            {
+                                if (delay.node.delayTargetMode == DelayTargetMode.ByActionType)
+                                {
+                                    if (other.node.actionType == delay.node.targetActionType)
+                                    {
+                                        int oldSlot = other.effectiveSlot;
+                                        other.effectiveSlot = Math.Min(other.effectiveSlot + 1, TIMELINE_SLOTS - 1);
+                                        other.node.effectiveSlot = other.effectiveSlot;
+                                        simulationLog.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
+                                    }
+                                }
+                                else if (delay.node.delayTargetMode == DelayTargetMode.AllActionsInSlot)
+                                {
+                                    int oldSlot = other.effectiveSlot;
+                                    other.effectiveSlot = Math.Min(other.effectiveSlot + 1, TIMELINE_SLOTS - 1);
+                                    other.node.effectiveSlot = other.effectiveSlot;
+                                    simulationLog.Add($"     * [Slot-Wide Delay] Shifted action '{other.node.actionType}' from Slot {slot} to {other.effectiveSlot}");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        simulationLog.Add($"  -> [DELAY] {src} delays {tgt} by {delay.node.value} slots.");
+
+                        foreach (var other in simNodes)
+                        {
+                            if (!other.processed && 
+                                other.node.sourceId == delay.node.targetId && 
+                                other.effectiveSlot >= slot)
+                            {
+                                int oldSlot = other.effectiveSlot;
+                                other.effectiveSlot = Math.Min(TIMELINE_SLOTS, other.effectiveSlot + delay.node.value);
+                                other.node.effectiveSlot = other.effectiveSlot;
+                                simulationLog.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
+                            }
                         }
                     }
                 }

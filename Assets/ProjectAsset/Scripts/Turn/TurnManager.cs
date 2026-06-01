@@ -20,6 +20,9 @@ namespace ProjectTimeline.Timeline
 
         /// <summary>Enemy HP reached zero – victory screen is visible.</summary>
         Victory,
+
+        /// <summary>Player HP reached zero – defeat screen is visible.</summary>
+        Defeat,
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -72,6 +75,10 @@ namespace ProjectTimeline.Timeline
                  "OnVictory event instead.")]
         private GameObject victoryPanel;
 
+        [SerializeField]
+        [Tooltip("Panel shown when the player is defeated.")]
+        private GameObject defeatPanel;
+
         // ── Execution Timing ──────────────────────────────────────────────────
 
         [Header("Execution Timing")]
@@ -92,6 +99,9 @@ namespace ProjectTimeline.Timeline
         [Tooltip("Raised when the enemy HP hits zero mid-execution. " +
                  "Wire any additional victory logic here (e.g. scene transition).")]
         public UnityEngine.Events.UnityEvent OnVictory;
+
+        [Tooltip("Raised when the player HP hits zero mid-execution.")]
+        public UnityEngine.Events.UnityEvent OnDefeat;
 
         [Tooltip("Raised at the very end of CommitCurrentTurn, right after control " +
                  "returns to the player. Wire any 'new turn started' logic here.")]
@@ -250,6 +260,16 @@ namespace ProjectTimeline.Timeline
                         yield break; // ← hard stop; coroutine never falls through to CommitCurrentTurn
                     }
                 }
+
+                if (model.simulatedCharacters.TryGetValue(CharacterID.Player, out CharacterData playerState))
+                {
+                    if (playerState.currentHp <= 0)
+                    {
+                        Debug.Log($"[TurnManager] 💀 Player defeated at slot {slot}! Triggering defeat.");
+                        yield return TriggerDefeatRoutine();
+                        yield break;
+                    }
+                }
             }
 
             // ── All slots resolved; enemy still alive → commit the turn ───────
@@ -302,6 +322,28 @@ namespace ProjectTimeline.Timeline
             }
 
             OnVictory?.Invoke();
+
+            // Give the player a moment to see the final frame before any overlay appears
+            yield return new WaitForSeconds(0.5f);
+
+            _activeExecution = null;
+        }
+
+        /// <summary>
+        /// Triggered when the player HP reaches ≤ 0 during execution.
+        /// Shows the defeat panel and raises the OnDefeat event.
+        /// Does NOT call CommitCurrentTurn or re-enable planning UI.
+        /// </summary>
+        private IEnumerator TriggerDefeatRoutine()
+        {
+            SetPhase(TurnPhase.Defeat);
+
+            if (defeatPanel != null)
+            {
+                defeatPanel.SetActive(true);
+            }
+
+            OnDefeat?.Invoke();
 
             // Give the player a moment to see the final frame before any overlay appears
             yield return new WaitForSeconds(0.5f);

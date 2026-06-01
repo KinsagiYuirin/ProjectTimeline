@@ -10,21 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a838f6b64a5e1f42ad22fe5a31be941, type: 3}
-  m_Name: NewCardBlueprint 2
+  m_Name: Delay test
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.CardDataBlueprint
-  cardId: 1
-  cardName: Go Delay
-  cardDescription: Get Target Delay 10 Damage
-  energyCost: 1
-  icon: {fileID: 7178926463091282321, guid: 069ec23099623e24ab1dc4a75b8e187a, type: 3}
+  cardId: 
+  cardName: 
+  cardDescription: 
+  energyCost: 0
+  icon: {fileID: 0}
   actionBlueprint:
-    id: 3
+    id: 
     sourceId: 0
-    targetId: 1
-    startSlot: 1
-    effectiveSlot: 1
+    targetId: 0
+    startSlot: 0
+    effectiveSlot: 0
     isExclusive: 0
     actionType: 2
-    value: 1
+    value: 0
     isTargetedDelay: 1
     targetActionType: 0
+    delayTargetMode: 1

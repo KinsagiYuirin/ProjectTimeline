@@ -6,20 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="43953c56-f3ba-4157-a124-62fcfedcb6f3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ProjectTimeline/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ProjectTimeline/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Prefabs/Card.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Prefabs/Card.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/Card/CardCollectionModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/Card/CardCollectionModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/Card/CardTimelinePresenter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/Card/CardTimelinePresenter.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardItem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardItem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardViewManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardViewManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/PlayedCardIconUI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/PlayedCardIconUI.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/NewCardBlueprint 1.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/NewCardBlueprint 1.asset.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/NewCardBlueprint.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/NewCardBlueprint.asset.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineSlotVisualizer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineSlotVisualizer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TurnManager.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TurnManager.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/Player test/NewCardBlueprint 2.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/Player test/NewCardBlueprint 2.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Turn/TurnManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Turn/TurnManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity.meta" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,7 +153,8 @@
       <workItem from="1779441563155" duration="671000" />
       <workItem from="1779443732060" duration="20000" />
       <workItem from="1780027659458" duration="2243000" />
-      <workItem from="1780117710169" duration="5356000" />
+      <workItem from="1780117710169" duration="5950000" />
+      <workItem from="1780285442461" duration="1919000" />
     </task>
     <servers />
   </component>
