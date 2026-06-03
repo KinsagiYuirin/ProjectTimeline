@@ -498,7 +498,13 @@ namespace ProjectTimeline.Timeline
             // B. Card Pile & Resource Reset
             presenter.DiscardHand();
             presenter.ResetEnergy();
-            presenter.DrawCards(cardViewManager.startingDrawCount);
+            int drawCount = cardViewManager.startingDrawCount;
+            if (model.bonusDrawNextTurn > 0)
+            {
+                drawCount += model.bonusDrawNextTurn;
+                model.bonusDrawNextTurn = 0; // reset
+            }
+            presenter.DrawCards(drawCount);
 
             // Increment Turn Number immediately after resetting energy
             CurrentTurnNumber++;

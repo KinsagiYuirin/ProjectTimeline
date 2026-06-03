@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cff2e822586f524490bab72af1e5999, type: 3}
   m_Name: Delay Attack
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.DelayEffect
-  isTargetedDelay: 1
+  isTargetedDelay: 0
   targetActionType: 0
-  delayTargetMode: 1
+  delayTargetMode: 0

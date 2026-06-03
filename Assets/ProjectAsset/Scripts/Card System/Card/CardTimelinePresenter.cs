@@ -153,6 +153,7 @@ namespace ProjectTimeline.Timeline
             timelineAction.effectiveSlot = targetSlot;
             timelineAction.isExclusive = playingIsExclusive; // Retain blueprint's exclusivity status
             timelineAction.sourceId = CharacterID.Player; // Player card action
+            timelineAction.cardType = card.blueprint.cardType; // Keep cardType synchronized!
 
             timeline.playerActions.Add(timelineAction);
 

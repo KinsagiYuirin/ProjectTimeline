@@ -12,7 +12,9 @@ namespace ProjectTimeline.Timeline
         public override EffectPhase Phase => EffectPhase.Utility;
 
         [Header("Status Configuration")]
-        public string statusId;
+        [Tooltip("The Status Effect asset definition.")]
+        public StatusEffectSO status;
+
         public int duration = 2;
         public int intensity = 1;
 
@@ -29,11 +31,13 @@ namespace ProjectTimeline.Timeline
             List<string> logs
         )
         {
+            if (status == null) return;
+
             if (model.simulatedCharacters.TryGetValue(targetId, out CharacterData tgt))
             {
                 int finalIntensity = useNodeValueForIntensity ? value : intensity;
-                tgt.ApplyStatus(statusId, duration, finalIntensity);
-                logs.Add($"  -> [STATUS EFFECT] Applied {statusId} (Dur: {duration}, Value: {finalIntensity}) to {tgt.name}");
+                tgt.ApplyStatus(status, duration, finalIntensity);
+                logs.Add($"  -> [STATUS EFFECT] Applied {status.displayName} (Dur: {duration}, Value: {finalIntensity}) to {tgt.name}");
             }
         }
     }

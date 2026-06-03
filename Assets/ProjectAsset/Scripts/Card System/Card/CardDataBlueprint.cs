@@ -12,6 +12,7 @@ namespace ProjectTimeline.Timeline
         [Header("Card Metadata")]
         public string cardId;
         public string cardName;
+        public CardType cardType;
         [TextArea(2, 5)]
         public string cardDescription;
 

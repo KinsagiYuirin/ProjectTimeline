@@ -29,7 +29,7 @@ namespace ProjectTimeline.Timeline
                 // Check if source is Weak (reduces outgoing damage by 25%)
                 if (src.statusEffects != null)
                 {
-                    var weak = src.statusEffects.Find(s => s.statusId.Equals("Weak", System.StringComparison.OrdinalIgnoreCase));
+                    var weak = src.statusEffects.Find(s => s.effectType == StatusEffectType.Weak);
                     if (weak != null && weak.duration > 0)
                     {
                         int oldDmg = dmg;
@@ -38,21 +38,9 @@ namespace ProjectTimeline.Timeline
                     }
                 }
 
-                // Check if target is Vulnerable (increases incoming damage by 50%)
-                if (tgt.statusEffects != null)
-                {
-                    var vul = tgt.statusEffects.Find(s => s.statusId.Equals("Vulnerable", System.StringComparison.OrdinalIgnoreCase));
-                    if (vul != null && vul.duration > 0)
-                    {
-                        int oldDmg = dmg;
-                        dmg = Mathf.RoundToInt(dmg * 1.5f);
-                        logs.Add($"     * Vulnerable increases damage taken by {tgt.name}: {oldDmg} -> {dmg}");
-                    }
-                }
-
                 int oldHp = tgt.currentHp;
                 int oldShield = tgt.shield;
-                tgt.TakeDamage(dmg);
+                tgt.TakeDamage(dmg, true); // Direct hit: will apply Vulnerable check in CharacterData.TakeDamage
                 logs.Add($"  -> [DAMAGE EFFECT] {src.name} attacks {tgt.name} for {dmg} dmg. (Shield: {oldShield}->{tgt.shield}, HP: {oldHp}->{tgt.currentHp})");
             }
         }

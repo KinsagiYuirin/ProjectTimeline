@@ -26,27 +26,49 @@ namespace ProjectTimeline.Timeline
         AllActionsInSlot   // New Option: Delays every action belonging to the target in that slot
     }
 
+    public enum StatusEffectType
+    {
+        None,
+        Poison,
+        Burn,
+        Weak,
+        Vulnerable,
+        Stun,
+        Freeze
+    }
+
+    public enum CardType
+    {
+        Normal,
+        Combo
+    }
+
     /// <summary>
-    /// Model representation of a combatant's attributes.
-    /// Marked serializable so it can be exposed and configured directly inside the Unity Inspector.
+    /// Model representation of a status effect active on a character.
     /// </summary>
     [Serializable]
     public class StatusEffectInstance
     {
-        public string statusId;
+        public StatusEffectType effectType;
+        public StatusEffectSO statusSO;
         public int duration;
         public int intensity;
 
-        public StatusEffectInstance(string statusId, int duration, int intensity)
+        // For backward compatibility and UI display
+        public string statusId;
+
+        public StatusEffectInstance(StatusEffectType effectType, int duration, int intensity, StatusEffectSO statusSO = null)
         {
-            this.statusId = statusId;
+            this.effectType = effectType;
             this.duration = duration;
             this.intensity = intensity;
+            this.statusSO = statusSO;
+            this.statusId = (statusSO != null) ? statusSO.displayName : effectType.ToString();
         }
 
         public StatusEffectInstance Clone()
         {
-            return new StatusEffectInstance(statusId, duration, intensity);
+            return new StatusEffectInstance(effectType, duration, intensity, statusSO);
         }
     }
 
@@ -94,9 +116,19 @@ namespace ProjectTimeline.Timeline
         /// <summary>
         /// Applies damage, taking active shields into account first.
         /// </summary>
-        public void TakeDamage(int amount)
+        public void TakeDamage(int amount, bool isDirectHit = true)
         {
             if (amount <= 0) return;
+
+            // Vulnerable status check (applies +50% damage multiplier to direct hits)
+            if (isDirectHit && statusEffects != null)
+            {
+                var vul = statusEffects.Find(s => s.effectType == StatusEffectType.Vulnerable);
+                if (vul != null && vul.duration > 0)
+                {
+                    amount = (int)Math.Round(amount * 1.5);
+                }
+            }
 
             if (shield > 0)
             {
@@ -125,21 +157,32 @@ namespace ProjectTimeline.Timeline
         }
 
         /// <summary>
+        /// Adds a status effect using a scriptable object asset configuration.
+        /// </summary>
+        public void ApplyStatus(StatusEffectSO statusSO, int duration, int intensity)
+        {
+            if (statusSO == null) return;
+            ApplyStatus(statusSO.effectType, duration, intensity, statusSO);
+        }
+
+        /// <summary>
         /// Adds a status effect (e.g. Poison, Weak, Vulnerable).
         /// </summary>
-        public void ApplyStatus(string statusId, int duration, int intensity)
+        public void ApplyStatus(StatusEffectType effectType, int duration, int intensity, StatusEffectSO statusSO = null)
         {
+            if (effectType == StatusEffectType.None) return;
             if (statusEffects == null) statusEffects = new List<StatusEffectInstance>();
 
-            var existing = statusEffects.Find(s => s.statusId.Equals(statusId, StringComparison.OrdinalIgnoreCase));
+            var existing = statusEffects.Find(s => s.effectType == effectType);
             if (existing != null)
             {
                 existing.duration = Math.Max(existing.duration, duration);
                 existing.intensity = Math.Max(existing.intensity, intensity);
+                if (statusSO != null) existing.statusSO = statusSO;
             }
             else
             {
-                statusEffects.Add(new StatusEffectInstance(statusId, duration, intensity));
+                statusEffects.Add(new StatusEffectInstance(effectType, duration, intensity, statusSO));
             }
         }
 
@@ -161,16 +204,16 @@ namespace ProjectTimeline.Timeline
                     continue;
                 }
 
-                if (status.statusId.Equals("Poison", StringComparison.OrdinalIgnoreCase))
+                if (status.effectType == StatusEffectType.Poison)
                 {
                     int oldHp = currentHp;
-                    TakeDamage(status.intensity);
+                    TakeDamage(status.intensity, isDirectHit: false);
                     logs.Add($"     * [Poison Tick] {name} takes {status.intensity} poison dmg. (HP: {oldHp}->{currentHp})");
                 }
-                else if (status.statusId.Equals("Burn", StringComparison.OrdinalIgnoreCase))
+                else if (status.effectType == StatusEffectType.Burn)
                 {
                     int oldHp = currentHp;
-                    TakeDamage(status.intensity);
+                    TakeDamage(status.intensity, isDirectHit: false);
                     logs.Add($"     * [Burn Tick] {name} takes {status.intensity} burn dmg. (HP: {oldHp}->{currentHp})");
                 }
 
@@ -184,7 +227,8 @@ namespace ProjectTimeline.Timeline
             foreach (var exp in expired)
             {
                 statusEffects.Remove(exp);
-                logs.Add($"     * Status '{exp.statusId}' on {name} has expired.");
+                string dispName = exp.statusSO != null ? exp.statusSO.displayName : exp.effectType.ToString();
+                logs.Add($"     * Status '{dispName}' on {name} has expired.");
             }
         }
     }
@@ -206,6 +250,12 @@ namespace ProjectTimeline.Timeline
 
         [Header("Modular Action Effects")]
         public List<CombatEffect> effects = new List<CombatEffect>();
+
+        [Header("Combo Card Settings")]
+        public CardType cardType = CardType.Normal;
+        public List<CombatEffect> comboEffects = new List<CombatEffect>();
+        public float comboValueMultiplier = 1f;
+        public int comboValueBonus = 0;
 
         /// <summary>
         /// Derived ActionType based on custom effects for legacy compatibility.
@@ -269,11 +319,18 @@ namespace ProjectTimeline.Timeline
                 startSlot = this.startSlot,
                 effectiveSlot = this.effectiveSlot,
                 isExclusive = this.isExclusive,
-                value = this.value
+                value = this.value,
+                cardType = this.cardType,
+                comboValueMultiplier = this.comboValueMultiplier,
+                comboValueBonus = this.comboValueBonus
             };
             if (this.effects != null)
             {
                 cloned.effects = new List<CombatEffect>(this.effects);
+            }
+            if (this.comboEffects != null)
+            {
+                cloned.comboEffects = new List<CombatEffect>(this.comboEffects);
             }
             return cloned;
         }
@@ -286,6 +343,9 @@ namespace ProjectTimeline.Timeline
     public class TimelineModel
     {
         public const int TIMELINE_SLOTS = 5;
+
+        // Tracks bonus card draws scheduled for the next turn commit
+        public int bonusDrawNextTurn = 0;
 
         // Baseline (start-of-turn) snapshot of combatants
         public Dictionary<CharacterID, CharacterData> baselineCharacters = new Dictionary<CharacterID, CharacterData>();
@@ -346,6 +406,9 @@ namespace ProjectTimeline.Timeline
 
             activeSimNodes = simNodes;
 
+            // Process player card combos before chronological slot evaluation
+            ProcessCardCombos(simulationLog);
+
             // 3. Chronological slot evaluation loop
             for (int slot = 0; slot <= upToSlot; slot++)
             {
@@ -357,6 +420,20 @@ namespace ProjectTimeline.Timeline
                     character.TickStatusEffects(simulationLog);
                 }
 
+                // FREEZE SHIFT PHASE
+                // If a character has a "Freeze" status effect in this slot, it delays all their future actions by 1 slot
+                foreach (var characterKvp in simulatedCharacters)
+                {
+                    var charId = characterKvp.Key;
+                    var charData = characterKvp.Value;
+                    var freeze = charData.statusEffects.Find(s => s.effectType == StatusEffectType.Freeze);
+                    if (freeze != null && freeze.duration > 0)
+                    {
+                        simulationLog.Add($"     * [FROZEN] {charData.name} is Frozen! Shifting all future actions by 1 slot.");
+                        ApplyDelay(charId, charId, slot, 1, false, ActionType.Attack, DelayTargetMode.AllActionsInSlot, simulationLog);
+                    }
+                }
+
                 // Process Phase: Delay
                 ProcessPhase(slot, EffectPhase.Delay, simulationLog);
 
@@ -365,6 +442,9 @@ namespace ProjectTimeline.Timeline
 
                 // Process Phase: Defense
                 ProcessPhase(slot, EffectPhase.Defense, simulationLog);
+
+                // Resolve Attack Clash (offsetting player and enemy damage values in the same slot)
+                ResolveAttackClashes(slot, simulationLog);
 
                 // Process Phase: Attack
                 ProcessPhase(slot, EffectPhase.Attack, simulationLog);
@@ -406,6 +486,20 @@ namespace ProjectTimeline.Timeline
             foreach (var nodeWrapper in phaseNodes)
             {
                 var action = nodeWrapper.node;
+
+                // Check if the source character is Stunned or Frozen (skips action execution in this slot)
+                if (simulatedCharacters.TryGetValue(action.sourceId, out var srcData))
+                {
+                    var stun = srcData.statusEffects.Find(s => s.effectType == StatusEffectType.Stun);
+                    var freeze = srcData.statusEffects.Find(s => s.effectType == StatusEffectType.Freeze);
+                    if ((stun != null && stun.duration > 0) || (freeze != null && freeze.duration > 0))
+                    {
+                        string reason = stun != null ? "Stunned" : "Frozen";
+                        logs.Add($"     * [{reason.ToUpper()}] {srcData.name} is {reason}! Skipping action.");
+                        nodeWrapper.processed = true; // Skip executing any other phase of this action
+                        continue;
+                    }
+                }
 
                 if (action.effects != null && action.effects.Count > 0)
                 {
@@ -510,6 +604,93 @@ namespace ProjectTimeline.Timeline
             }
         }
 
+        private void ResolveAttackClashes(int slot, List<string> logs)
+        {
+            if (activeSimNodes == null) return;
+
+            var slotNodes = activeSimNodes.FindAll(n => !n.processed && n.effectiveSlot == slot);
+            
+            var playerAttacks = slotNodes.FindAll(n => n.node.sourceId == CharacterID.Player && n.node.effects.Exists(e => e is DamageEffect));
+            var enemyAttacks = slotNodes.FindAll(n => n.node.sourceId == CharacterID.Enemy && n.node.effects.Exists(e => e is DamageEffect));
+
+            if (playerAttacks.Count > 0 && enemyAttacks.Count > 0)
+            {
+                int playerTotal = 0;
+                foreach (var a in playerAttacks) playerTotal += a.node.value;
+
+                int enemyTotal = 0;
+                foreach (var a in enemyAttacks) enemyTotal += a.node.value;
+
+                if (playerTotal == enemyTotal)
+                {
+                    foreach (var a in playerAttacks) a.node.value = 0;
+                    foreach (var a in enemyAttacks) a.node.value = 0;
+                    logs.Add($"⚔️ [CLASH] Player Attack ({playerTotal} dmg) meets Enemy Attack ({enemyTotal} dmg). Both offset completely!");
+                }
+                else if (playerTotal > enemyTotal)
+                {
+                    int remaining = playerTotal - enemyTotal;
+                    foreach (var a in enemyAttacks) a.node.value = 0;
+                    
+                    for (int i = 0; i < playerAttacks.Count; i++)
+                    {
+                        playerAttacks[i].node.value = (i == 0) ? remaining : 0;
+                    }
+                    logs.Add($"⚔️ [CLASH] Player Attack ({playerTotal} dmg) vs Enemy Attack ({enemyTotal} dmg). Player wins! Remaining dmg: {remaining}");
+                }
+                else
+                {
+                    int remaining = enemyTotal - playerTotal;
+                    foreach (var a in playerAttacks) a.node.value = 0;
+                    
+                    for (int i = 0; i < enemyAttacks.Count; i++)
+                    {
+                        enemyAttacks[i].node.value = (i == 0) ? remaining : 0;
+                    }
+                    logs.Add($"⚔️ [CLASH] Enemy Attack ({enemyTotal} dmg) vs Player Attack ({playerTotal} dmg). Enemy wins! Remaining dmg: {remaining}");
+                }
+            }
+        }
+        private void ProcessCardCombos(List<string> logs)
+        {
+            if (activeSimNodes == null) return;
+
+            // Find all player actions
+            var playerNodes = activeSimNodes.FindAll(n => n.node.sourceId == CharacterID.Player);
+            
+            // To check adjacency easily, store player start slots
+            HashSet<int> playerStartSlots = new HashSet<int>();
+            foreach (var n in playerNodes)
+            {
+                playerStartSlots.Add(n.node.startSlot);
+            }
+
+            foreach (var wrapper in playerNodes)
+            {
+                var node = wrapper.node;
+                if (node.cardType == CardType.Combo)
+                {
+                    // Check if there is any player action in the preceding slot
+                    if (playerStartSlots.Contains(node.startSlot - 1))
+                    {
+                        int oldValue = node.value;
+                        node.value = Mathf.RoundToInt(node.value * node.comboValueMultiplier) + node.comboValueBonus;
+                        
+                        // Append combo effects to active effects list
+                        if (node.comboEffects != null && node.comboEffects.Count > 0)
+                        {
+                            node.effects.AddRange(node.comboEffects);
+                        }
+
+                        logs.Add($"✨ [COMBO ACTIVATED] Combo Card '{node.id}' in Slot {node.startSlot} triggered! Value: {oldValue} -> {node.value}");
+                    }
+                    else
+                    {
+                        logs.Add($"⚠️ [COMBO FAILED] Combo Card '{node.id}' in Slot {node.startSlot} requires a preceding card in Slot {node.startSlot - 1}.");
+                    }
+                }
+            }
+        }
         private string GetName(CharacterID id)
         {
             if (baselineCharacters.TryGetValue(id, out var character))

@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a838f6b64a5e1f42ad22fe5a31be941, type: 3}
-  m_Name: NewCardBlueprint 2
+  m_Name: test Effect
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.CardDataBlueprint
-  cardId: 2
-  cardName: Defense
+  cardId: 1
+  cardName: Go Delay
   cardType: 0
-  cardDescription: Add 20 Armor
+  cardDescription: Get Target Delay Attack action
   energyCost: 1
-  icon: {fileID: 6292415348255532922, guid: 60f4612c448a1664b90ac7134e391ae0, type: 3}
+  icon: {fileID: 7178926463091282321, guid: 069ec23099623e24ab1dc4a75b8e187a, type: 3}
   actionBlueprint:
     id: 3
-    sourceId: 1
+    sourceId: 0
     targetId: 1
     startSlot: 1
     effectiveSlot: 1
-    isExclusive: 1
-    value: 20
+    isExclusive: 0
+    value: 1
     effects:
-    - {fileID: 11400000, guid: 40e103f1e0b7153448ba4342d4166266, type: 2}
+    - {fileID: 11400000, guid: 4dc37f35f1b4c9348a1bc99347c31b99, type: 2}
     cardType: 0
     comboEffects: []
     comboValueMultiplier: 1

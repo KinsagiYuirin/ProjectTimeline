@@ -204,6 +204,7 @@ namespace ProjectTimeline.Timeline
                 // Inject the runtime parameters from the struct
                 clonedNode.startSlot = setup.startSlot;
                 clonedNode.effectiveSlot = setup.startSlot;
+                clonedNode.cardType = setup.cardBlueprint.cardType; // Keep cardType synchronized!
 
                 // Generate or assign a unique instance ID
                 if (string.IsNullOrEmpty(setup.runtimeInstanceId))

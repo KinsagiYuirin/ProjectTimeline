@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.CardDataBlueprint
   cardId: 1
   cardName: Go Delay
-  cardDescription: Get Target Delay 10 Damage
+  cardType: 0
+  cardDescription: Get Target Delay Attack action
   energyCost: 1
   icon: {fileID: 7178926463091282321, guid: 069ec23099623e24ab1dc4a75b8e187a, type: 3}
   actionBlueprint:
@@ -24,7 +25,10 @@ MonoBehaviour:
     startSlot: 1
     effectiveSlot: 1
     isExclusive: 0
-    actionType: 2
     value: 1
-    isTargetedDelay: 1
-    targetActionType: 0
+    effects:
+    - {fileID: 11400000, guid: 4dc37f35f1b4c9348a1bc99347c31b99, type: 2}
+    cardType: 0
+    comboEffects: []
+    comboValueMultiplier: 1
+    comboValueBonus: 0

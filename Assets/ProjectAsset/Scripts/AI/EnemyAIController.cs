@@ -208,6 +208,7 @@ namespace ProjectTimeline.Timeline
             node.effectiveSlot = slot;
             node.sourceId = CharacterID.Enemy;
             node.targetId = (node.actionType == ActionType.Defend) ? CharacterID.Enemy : CharacterID.Player;
+            node.cardType = cardBlueprint.cardType; // Keep cardType synchronized!
 
             // Push the fully prepped node into model.enemyActions
             model.enemyActions.Add(node);
