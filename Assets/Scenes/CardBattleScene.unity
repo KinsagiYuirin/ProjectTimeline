@@ -3057,8 +3057,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6b1fc3c754ad29e44b35d10631be27a8, type: 2}
   - {fileID: 11400000, guid: 9964211af07604542b72520144788e18, type: 2}
   - {fileID: 11400000, guid: 1e4c3ce10aa34084f9956f527d686653, type: 2}
-  - {fileID: 11400000, guid: 6b1fc3c754ad29e44b35d10631be27a8, type: 2}
-  - {fileID: 11400000, guid: 9964211af07604542b72520144788e18, type: 2}
+  - {fileID: 11400000, guid: 79cc5a8ab62fa8146890b6570c15b197, type: 2}
   maxEnergy: 3
   startingDrawCount: 3
   cardPrefab: {fileID: 2407349969545757044, guid: c12b9296b1600ef49aa6493076561cd2, type: 3}
@@ -5502,11 +5501,13 @@ MonoBehaviour:
     maxHp: 100
     currentHp: 100
     shield: 0
+    statusEffects: []
   - id: enemy
     name: Goblin Boss (Enemy)
     maxHp: 80
     currentHp: 80
     shield: 0
+    statusEffects: []
   initialTimelineActions: []
   targetScrubSlot: 0
   playheadSlider: {fileID: 1564287706}

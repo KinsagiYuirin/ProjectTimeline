@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.StatusEffectSO
   effectType: 6
   displayName: Freeze
-  icon: {fileID: 0}
-  description: 
+  icon: {fileID: 6292415348255532922, guid: 60f4612c448a1664b90ac7134e391ae0, type: 3}
+  description: Target have freeze
