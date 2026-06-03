@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ProjectTimeline.Timeline
 {
@@ -30,6 +31,30 @@ namespace ProjectTimeline.Timeline
     /// Marked serializable so it can be exposed and configured directly inside the Unity Inspector.
     /// </summary>
     [Serializable]
+    public class StatusEffectInstance
+    {
+        public string statusId;
+        public int duration;
+        public int intensity;
+
+        public StatusEffectInstance(string statusId, int duration, int intensity)
+        {
+            this.statusId = statusId;
+            this.duration = duration;
+            this.intensity = intensity;
+        }
+
+        public StatusEffectInstance Clone()
+        {
+            return new StatusEffectInstance(statusId, duration, intensity);
+        }
+    }
+
+    /// <summary>
+    /// Model representation of a combatant's attributes.
+    /// Marked serializable so it can be exposed and configured directly inside the Unity Inspector.
+    /// </summary>
+    [Serializable]
     public class CharacterData
     {
         public string id;
@@ -37,6 +62,7 @@ namespace ProjectTimeline.Timeline
         public int maxHp;
         public int currentHp;
         public int shield;
+        public List<StatusEffectInstance> statusEffects = new List<StatusEffectInstance>();
 
         public CharacterData() { }
 
@@ -54,7 +80,15 @@ namespace ProjectTimeline.Timeline
         /// </summary>
         public CharacterData Clone()
         {
-            return new CharacterData(id, name, maxHp, currentHp, shield);
+            var cloned = new CharacterData(id, name, maxHp, currentHp, shield);
+            if (statusEffects != null)
+            {
+                foreach (var status in statusEffects)
+                {
+                    cloned.statusEffects.Add(status.Clone());
+                }
+            }
+            return cloned;
         }
 
         /// <summary>
@@ -89,6 +123,70 @@ namespace ProjectTimeline.Timeline
             if (amount <= 0) return;
             shield += amount;
         }
+
+        /// <summary>
+        /// Adds a status effect (e.g. Poison, Weak, Vulnerable).
+        /// </summary>
+        public void ApplyStatus(string statusId, int duration, int intensity)
+        {
+            if (statusEffects == null) statusEffects = new List<StatusEffectInstance>();
+
+            var existing = statusEffects.Find(s => s.statusId.Equals(statusId, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                existing.duration = Math.Max(existing.duration, duration);
+                existing.intensity = Math.Max(existing.intensity, intensity);
+            }
+            else
+            {
+                statusEffects.Add(new StatusEffectInstance(statusId, duration, intensity));
+            }
+        }
+
+        /// <summary>
+        /// Resolves ticking status effects at the start of a slot.
+        /// </summary>
+        public void TickStatusEffects(List<string> logs)
+        {
+            if (statusEffects == null || statusEffects.Count == 0) return;
+
+            List<StatusEffectInstance> expired = new List<StatusEffectInstance>();
+
+            for (int i = 0; i < statusEffects.Count; i++)
+            {
+                var status = statusEffects[i];
+                if (status.duration <= 0)
+                {
+                    expired.Add(status);
+                    continue;
+                }
+
+                if (status.statusId.Equals("Poison", StringComparison.OrdinalIgnoreCase))
+                {
+                    int oldHp = currentHp;
+                    TakeDamage(status.intensity);
+                    logs.Add($"     * [Poison Tick] {name} takes {status.intensity} poison dmg. (HP: {oldHp}->{currentHp})");
+                }
+                else if (status.statusId.Equals("Burn", StringComparison.OrdinalIgnoreCase))
+                {
+                    int oldHp = currentHp;
+                    TakeDamage(status.intensity);
+                    logs.Add($"     * [Burn Tick] {name} takes {status.intensity} burn dmg. (HP: {oldHp}->{currentHp})");
+                }
+
+                status.duration--;
+                if (status.duration <= 0)
+                {
+                    expired.Add(status);
+                }
+            }
+
+            foreach (var exp in expired)
+            {
+                statusEffects.Remove(exp);
+                logs.Add($"     * Status '{exp.statusId}' on {name} has expired.");
+            }
+        }
     }
 
     /// <summary>
@@ -104,17 +202,34 @@ namespace ProjectTimeline.Timeline
         public int startSlot; // Index of slot (0 to 4)
         public int effectiveSlot; // Where the action actually executes after delays (dynamic)
         public bool isExclusive; // True: Main Action (cannot overlap), False: Free Action (can overlap)
-        public ActionType actionType;
         public int value; // Damage amount, Shield amount, Delay slots
 
-        // Targeted Delay fields
-        public bool isTargetedDelay;
-        public ActionType targetActionType;
-        public DelayTargetMode delayTargetMode = DelayTargetMode.ByActionType;
+        [Header("Modular Action Effects")]
+        public List<CombatEffect> effects = new List<CombatEffect>();
+
+        /// <summary>
+        /// Derived ActionType based on custom effects for legacy compatibility.
+        /// </summary>
+        public ActionType actionType
+        {
+            get
+            {
+                if (effects != null && effects.Count > 0)
+                {
+                    foreach (var effect in effects)
+                    {
+                        if (effect is DamageEffect) return ActionType.Attack;
+                        if (effect is ShieldEffect) return ActionType.Defend;
+                        if (effect is DelayEffect) return ActionType.Delay;
+                    }
+                }
+                return ActionType.Attack; // Default fallback
+            }
+        }
 
         public ActionNodeData() { }
 
-        public ActionNodeData(string id, CharacterID sourceId, CharacterID targetId, int startSlot, ActionType actionType, int value, bool isExclusive = true)
+        public ActionNodeData(string id, CharacterID sourceId, CharacterID targetId, int startSlot, ActionType legacyType, int value, bool isExclusive = true)
         {
             this.id = id;
             this.sourceId = sourceId;
@@ -122,8 +237,23 @@ namespace ProjectTimeline.Timeline
             this.startSlot = startSlot;
             this.effectiveSlot = startSlot; // Default to start slot
             this.isExclusive = isExclusive;
-            this.actionType = actionType;
             this.value = value;
+
+            // Automatically populate modular effects for programmatically created actions
+            switch (legacyType)
+            {
+                case ActionType.Attack:
+                    effects.Add(ScriptableObject.CreateInstance<DamageEffect>());
+                    break;
+                case ActionType.Defend:
+                    effects.Add(ScriptableObject.CreateInstance<ShieldEffect>());
+                    break;
+                case ActionType.Delay:
+                    var delayEffect = ScriptableObject.CreateInstance<DelayEffect>();
+                    delayEffect.isTargetedDelay = false;
+                    effects.Add(delayEffect);
+                    break;
+            }
         }
 
         /// <summary>
@@ -131,13 +261,21 @@ namespace ProjectTimeline.Timeline
         /// </summary>
         public ActionNodeData Clone()
         {
-            return new ActionNodeData(id, sourceId, targetId, startSlot, actionType, value, isExclusive)
+            var cloned = new ActionNodeData
             {
+                id = this.id,
+                sourceId = this.sourceId,
+                targetId = this.targetId,
+                startSlot = this.startSlot,
                 effectiveSlot = this.effectiveSlot,
-                isTargetedDelay = this.isTargetedDelay,
-                targetActionType = this.targetActionType,
-                delayTargetMode = this.delayTargetMode
+                isExclusive = this.isExclusive,
+                value = this.value
             };
+            if (this.effects != null)
+            {
+                cloned.effects = new List<CombatEffect>(this.effects);
+            }
+            return cloned;
         }
     }
 
@@ -180,6 +318,9 @@ namespace ProjectTimeline.Timeline
             }
         }
 
+        // Temporary reference to the active simulation nodes during simulation run
+        private List<SimulatedNode> activeSimNodes;
+
         /// <summary>
         /// Simulates all actions slot-by-slot chronologically in a single frame.
         /// </summary>
@@ -203,121 +344,40 @@ namespace ProjectTimeline.Timeline
             foreach (var act in enemyActions) simNodes.Add(new SimulatedNode(act.Clone()));
             foreach (var act in playerActions) simNodes.Add(new SimulatedNode(act.Clone()));
 
+            activeSimNodes = simNodes;
+
             // 3. Chronological slot evaluation loop
             for (int slot = 0; slot <= upToSlot; slot++)
             {
                 simulationLog.Add($"[Slot {slot}] Processing actions...");
 
-                // A. Delay Phase (modify effective slots of target's future actions)
-                List<SimulatedNode> delays = simNodes.FindAll(n => 
-                    !n.processed && n.effectiveSlot == slot && n.node.actionType == ActionType.Delay
-                );
-
-                foreach (var delay in delays)
+                // Tick Status Effects at start of slot for active characters
+                foreach (var character in simulatedCharacters.Values)
                 {
-                    delay.processed = true;
-                    string src = GetName(delay.node.sourceId);
-                    string tgt = GetName(delay.node.targetId);
-
-                    if (delay.node.isTargetedDelay)
-                    {
-                        simulationLog.Add($"  -> [TARGETED DELAY] {src} targeted delay resolved at slot {slot} (Mode: {delay.node.delayTargetMode}, targets CharacterID.{delay.node.targetId}).");
-
-                        foreach (var other in simNodes)
-                        {
-                            if (!other.processed && 
-                                other.effectiveSlot == slot && 
-                                other.node.sourceId == delay.node.targetId)
-                            {
-                                if (delay.node.delayTargetMode == DelayTargetMode.ByActionType)
-                                {
-                                    if (other.node.actionType == delay.node.targetActionType)
-                                    {
-                                        int oldSlot = other.effectiveSlot;
-                                        other.effectiveSlot = Math.Min(other.effectiveSlot + 1, TIMELINE_SLOTS - 1);
-                                        other.node.effectiveSlot = other.effectiveSlot;
-                                        simulationLog.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
-                                    }
-                                }
-                                else if (delay.node.delayTargetMode == DelayTargetMode.AllActionsInSlot)
-                                {
-                                    int oldSlot = other.effectiveSlot;
-                                    other.effectiveSlot = Math.Min(other.effectiveSlot + 1, TIMELINE_SLOTS - 1);
-                                    other.node.effectiveSlot = other.effectiveSlot;
-                                    simulationLog.Add($"     * [Slot-Wide Delay] Shifted action '{other.node.actionType}' from Slot {slot} to {other.effectiveSlot}");
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        simulationLog.Add($"  -> [DELAY] {src} delays {tgt} by {delay.node.value} slots.");
-
-                        foreach (var other in simNodes)
-                        {
-                            if (!other.processed && 
-                                other.node.sourceId == delay.node.targetId && 
-                                other.effectiveSlot >= slot)
-                            {
-                                int oldSlot = other.effectiveSlot;
-                                other.effectiveSlot = Math.Min(TIMELINE_SLOTS, other.effectiveSlot + delay.node.value);
-                                other.node.effectiveSlot = other.effectiveSlot;
-                                simulationLog.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
-                            }
-                        }
-                    }
+                    character.TickStatusEffects(simulationLog);
                 }
 
-                // Check for conflicts: multiple exclusive actions on the same character at the same slot (Option A: Log only)
-                List<SimulatedNode> slotActions = simNodes.FindAll(n => !n.processed && n.effectiveSlot == slot);
-                HashSet<CharacterID> exclusiveUsers = new HashSet<CharacterID>();
-                HashSet<CharacterID> flaggedUsers = new HashSet<CharacterID>();
-                foreach (var node in slotActions)
+                // Process Phase: Delay
+                ProcessPhase(slot, EffectPhase.Delay, simulationLog);
+
+                // Check for conflicts: multiple exclusive actions on the same character at the same slot
+                CheckSlotConflicts(slot, simulationLog);
+
+                // Process Phase: Defense
+                ProcessPhase(slot, EffectPhase.Defense, simulationLog);
+
+                // Process Phase: Attack
+                ProcessPhase(slot, EffectPhase.Attack, simulationLog);
+
+                // Process Phase: Utility
+                ProcessPhase(slot, EffectPhase.Utility, simulationLog);
+
+                // Mark all actions executed in this slot as processed
+                foreach (var node in activeSimNodes)
                 {
-                    if (node.node.isExclusive)
+                    if (node.effectiveSlot == slot)
                     {
-                        if (!exclusiveUsers.Add(node.node.sourceId))
-                        {
-                            if (flaggedUsers.Add(node.node.sourceId))
-                            {
-                                string sourceName = GetName(node.node.sourceId);
-                                simulationLog.Add($"[Conflict Slot {slot}] {sourceName} cannot execute multiple exclusive actions!");
-                            }
-                        }
-                    }
-                }
-
-                // B. Defensive Phase (Apply shields)
-                List<SimulatedNode> defends = simNodes.FindAll(n => 
-                    !n.processed && n.effectiveSlot == slot && n.node.actionType == ActionType.Defend
-                );
-
-                foreach (var def in defends)
-                {
-                    def.processed = true;
-                    if (simulatedCharacters.TryGetValue(def.node.sourceId, out var src) &&
-                        simulatedCharacters.TryGetValue(def.node.targetId, out var tgt))
-                    {
-                        tgt.AddShield(def.node.value);
-                        simulationLog.Add($"  -> [DEFEND] {src.name} adds {def.node.value} shield to {tgt.name} (Shield: {tgt.shield})");
-                    }
-                }
-
-                // C. Attack Phase (Apply damage)
-                List<SimulatedNode> attacks = simNodes.FindAll(n => 
-                    !n.processed && n.effectiveSlot == slot && n.node.actionType == ActionType.Attack
-                );
-
-                foreach (var atk in attacks)
-                {
-                    atk.processed = true;
-                    if (simulatedCharacters.TryGetValue(atk.node.sourceId, out var src) &&
-                        simulatedCharacters.TryGetValue(atk.node.targetId, out var tgt))
-                    {
-                        int oldHp = tgt.currentHp;
-                        int oldShield = tgt.shield;
-                        tgt.TakeDamage(atk.node.value);
-                        simulationLog.Add($"  -> [ATTACK] {src.name} attacks {tgt.name} for {atk.node.value} dmg. (Shield: {oldShield}->{tgt.shield}, HP: {oldHp}->{tgt.currentHp})");
+                        node.processed = true;
                     }
                 }
             }
@@ -329,6 +389,124 @@ namespace ProjectTimeline.Timeline
             foreach (var simNode in simNodes)
             {
                 simulatedActions.Add(simNode.node);
+            }
+
+            activeSimNodes = null; // Clean up active reference
+        }
+
+        private void ProcessPhase(int slot, EffectPhase phase, List<string> logs)
+        {
+            if (activeSimNodes == null) return;
+
+            // Find nodes executing in this slot that are not processed
+            List<SimulatedNode> phaseNodes = activeSimNodes.FindAll(n => 
+                !n.processed && n.effectiveSlot == slot
+            );
+
+            foreach (var nodeWrapper in phaseNodes)
+            {
+                var action = nodeWrapper.node;
+
+                if (action.effects != null && action.effects.Count > 0)
+                {
+                    // Execute all custom effects matching the phase
+                    var matchingEffects = action.effects.FindAll(e => e != null && e.Phase == phase);
+                    foreach (var effect in matchingEffects)
+                    {
+                        effect.Execute(action.sourceId, action.targetId, action.value, this, slot, action, logs);
+                    }
+                }
+            }
+        }
+
+        private void CheckSlotConflicts(int slot, List<string> logs)
+        {
+            if (activeSimNodes == null) return;
+
+            List<SimulatedNode> slotActions = activeSimNodes.FindAll(n => !n.processed && n.effectiveSlot == slot);
+            HashSet<CharacterID> exclusiveUsers = new HashSet<CharacterID>();
+            HashSet<CharacterID> flaggedUsers = new HashSet<CharacterID>();
+            foreach (var wrapper in slotActions)
+            {
+                if (wrapper.node.isExclusive)
+                {
+                    if (!exclusiveUsers.Add(wrapper.node.sourceId))
+                    {
+                        if (flaggedUsers.Add(wrapper.node.sourceId))
+                        {
+                            string sourceName = GetName(wrapper.node.sourceId);
+                            logs.Add($"[Conflict Slot {slot}] {sourceName} cannot execute multiple exclusive actions!");
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// API for modular effects to delay targets on the timeline.
+        /// </summary>
+        public void ApplyDelay(
+            CharacterID sourceId, 
+            CharacterID targetId, 
+            int slot, 
+            int value, 
+            bool isTargetedDelay, 
+            ActionType targetActionType, 
+            DelayTargetMode delayTargetMode, 
+            List<string> logs
+        )
+        {
+            if (activeSimNodes == null) return;
+
+            string src = GetName(sourceId);
+            string tgt = GetName(targetId);
+
+            if (isTargetedDelay)
+            {
+                logs.Add($"  -> [TARGETED DELAY] {src} targeted delay resolved at slot {slot} (Mode: {delayTargetMode}, targets CharacterID.{targetId}).");
+
+                foreach (var other in activeSimNodes)
+                {
+                    if (!other.processed && 
+                        other.effectiveSlot == slot && 
+                        other.node.sourceId == targetId)
+                    {
+                        if (delayTargetMode == DelayTargetMode.ByActionType)
+                        {
+                            if (other.node.actionType == targetActionType)
+                            {
+                                int oldSlot = other.effectiveSlot;
+                                other.effectiveSlot = Math.Min(other.effectiveSlot + 1, TIMELINE_SLOTS - 1);
+                                other.node.effectiveSlot = other.effectiveSlot;
+                                logs.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
+                            }
+                        }
+                        else if (delayTargetMode == DelayTargetMode.AllActionsInSlot)
+                        {
+                            int oldSlot = other.effectiveSlot;
+                            other.effectiveSlot = Math.Min(other.effectiveSlot + 1, TIMELINE_SLOTS - 1);
+                            other.node.effectiveSlot = other.effectiveSlot;
+                            logs.Add($"     * [Slot-Wide Delay] Shifted action '{other.node.actionType}' from Slot {slot} to {other.effectiveSlot}");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                logs.Add($"  -> [DELAY] {src} delays {tgt} by {value} slots.");
+
+                foreach (var other in activeSimNodes)
+                {
+                    if (!other.processed && 
+                        other.node.sourceId == targetId && 
+                        other.effectiveSlot >= slot)
+                    {
+                        int oldSlot = other.effectiveSlot;
+                        other.effectiveSlot = Math.Min(TIMELINE_SLOTS, other.effectiveSlot + value);
+                        other.node.effectiveSlot = other.effectiveSlot;
+                        logs.Add($"     * Action '{other.node.actionType}' shifted: Slot {oldSlot} -> Slot {other.effectiveSlot}");
+                    }
+                }
             }
         }
 

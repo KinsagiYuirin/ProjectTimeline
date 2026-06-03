@@ -24,8 +24,6 @@ MonoBehaviour:
     startSlot: 0
     effectiveSlot: 0
     isExclusive: 0
-    actionType: 2
     value: 0
-    isTargetedDelay: 1
-    targetActionType: 0
-    delayTargetMode: 1
+    effects:
+    - {fileID: 11400000, guid: 6a79a0ddb1cb6ef4289f9f782c98f7d2, type: 2}

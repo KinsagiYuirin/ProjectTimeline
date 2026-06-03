@@ -24,5 +24,6 @@ MonoBehaviour:
     startSlot: 1
     effectiveSlot: 1
     isExclusive: 1
-    actionType: 1
     value: 20
+    effects:
+    - {fileID: 11400000, guid: 900ba86ac4bc92142bf5ca47ae0211f0, type: 2}

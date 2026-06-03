@@ -332,21 +332,53 @@ namespace ProjectTimeline.Timeline
                     SpriteRenderer sourceSR = GetSpriteRenderer(action.sourceId);
                     SpriteRenderer targetSR = GetSpriteRenderer(action.targetId);
 
-                    switch (action.actionType)
+                    if (action.effects != null && action.effects.Count > 0)
                     {
-                        case ActionType.Attack:
-                            // Source flashes attack color, target flashes damage color
-                            TriggerFlash(sourceSR, attackFlashColor);
-                            TriggerFlash(targetSR, damageFlashColor);
-                            break;
-                        case ActionType.Defend:
-                            // Target receives shield block color
-                            TriggerFlash(targetSR, shieldFlashColor);
-                            break;
-                        case ActionType.Delay:
-                            // Target receives delay yellow flash
-                            TriggerFlash(targetSR, delayFlashColor);
-                            break;
+                        foreach (var effect in action.effects)
+                        {
+                            if (effect == null) continue;
+                            if (effect is DamageEffect)
+                            {
+                                TriggerFlash(sourceSR, attackFlashColor);
+                                TriggerFlash(targetSR, damageFlashColor);
+                            }
+                            else if (effect is ShieldEffect)
+                            {
+                                TriggerFlash(targetSR, shieldFlashColor);
+                            }
+                            else if (effect is DelayEffect)
+                            {
+                                TriggerFlash(targetSR, delayFlashColor);
+                            }
+                            else if (effect is HealEffect)
+                            {
+                                TriggerFlash(targetSR, shieldFlashColor); // Heal uses shield flash as positive feedback
+                            }
+                            else if (effect is ApplyStatusEffect)
+                            {
+                                TriggerFlash(targetSR, delayFlashColor); // Status uses delay yellow flash
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Legacy fallback
+                        switch (action.actionType)
+                        {
+                            case ActionType.Attack:
+                                // Source flashes attack color, target flashes damage color
+                                TriggerFlash(sourceSR, attackFlashColor);
+                                TriggerFlash(targetSR, damageFlashColor);
+                                break;
+                            case ActionType.Defend:
+                                // Target receives shield block color
+                                TriggerFlash(targetSR, shieldFlashColor);
+                                break;
+                            case ActionType.Delay:
+                                // Target receives delay yellow flash
+                                TriggerFlash(targetSR, delayFlashColor);
+                                break;
+                        }
                     }
                 }
             }
