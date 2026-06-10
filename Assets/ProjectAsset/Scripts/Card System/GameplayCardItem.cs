@@ -17,6 +17,7 @@ namespace ProjectTimeline.Timeline
         [SerializeField] private TMP_Text costText;
         [SerializeField] private TMP_Text descriptionText;
         [SerializeField] private Image iconImage;
+        [SerializeField] private TMP_Text speedText;
 
         [Header("Hover Feedback Settings")]
         [SerializeField] [Tooltip("How much to scale up the card on mouse hover.")]
@@ -92,6 +93,11 @@ namespace ProjectTimeline.Timeline
             if (iconImage != null && instance.blueprint.icon != null)
             {
                 iconImage.sprite = instance.blueprint.icon;
+            }
+
+            if (speedText != null)
+            {
+                speedText.text = instance.blueprint.cardSpeed.ToString();
             }
         }
 

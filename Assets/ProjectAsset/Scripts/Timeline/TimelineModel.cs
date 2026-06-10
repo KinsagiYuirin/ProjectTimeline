@@ -43,6 +43,14 @@ namespace ProjectTimeline.Timeline
         Combo
     }
 
+    public enum CardSpeed
+    {
+        Slow = -1,
+        Normal = 0,
+        Fast = 1,
+        Instant = 2
+    }
+
     /// <summary>
     /// Model representation of a status effect active on a character.
     /// </summary>
@@ -257,6 +265,9 @@ namespace ProjectTimeline.Timeline
         public float comboValueMultiplier = 1f;
         public int comboValueBonus = 0;
 
+        [Header("Speed/Priority Settings")]
+        public CardSpeed cardSpeed = CardSpeed.Normal;
+
         /// <summary>
         /// Derived ActionType based on custom effects for legacy compatibility.
         /// </summary>
@@ -288,6 +299,7 @@ namespace ProjectTimeline.Timeline
             this.effectiveSlot = startSlot; // Default to start slot
             this.isExclusive = isExclusive;
             this.value = value;
+            this.cardSpeed = CardSpeed.Normal;
 
             // Automatically populate modular effects for programmatically created actions
             switch (legacyType)
@@ -322,7 +334,8 @@ namespace ProjectTimeline.Timeline
                 value = this.value,
                 cardType = this.cardType,
                 comboValueMultiplier = this.comboValueMultiplier,
-                comboValueBonus = this.comboValueBonus
+                comboValueBonus = this.comboValueBonus,
+                cardSpeed = this.cardSpeed
             };
             if (this.effects != null)
             {
@@ -434,31 +447,66 @@ namespace ProjectTimeline.Timeline
                     }
                 }
 
-                // Process Phase: Delay
+                // Process Phase: Delay (always resolve delays first to compute shifts correctly)
                 ProcessPhase(slot, EffectPhase.Delay, simulationLog);
 
                 // Check for conflicts: multiple exclusive actions on the same character at the same slot
                 CheckSlotConflicts(slot, simulationLog);
 
-                // Process Phase: Defense
-                ProcessPhase(slot, EffectPhase.Defense, simulationLog);
-
                 // Resolve Attack Clash (offsetting player and enemy damage values in the same slot)
                 ResolveAttackClashes(slot, simulationLog);
 
-                // Process Phase: Attack
-                ProcessPhase(slot, EffectPhase.Attack, simulationLog);
+                // Gather active actions in this slot that are not processed
+                List<SimulatedNode> slotNodes = activeSimNodes.FindAll(n => 
+                    !n.processed && n.effectiveSlot == slot
+                );
 
-                // Process Phase: Utility
-                ProcessPhase(slot, EffectPhase.Utility, simulationLog);
+                // Sort actions by Global Slot Priority (Speed descending, then Type order, then Player first)
+                slotNodes.Sort((a, b) => {
+                    // 1. Priority (Speed) - descending
+                    int comparePriority = ((int)b.node.cardSpeed).CompareTo((int)a.node.cardSpeed);
+                    if (comparePriority != 0) return comparePriority;
 
-                // Mark all actions executed in this slot as processed
-                foreach (var node in activeSimNodes)
+                    // 2. Type order (Delay < Defend < Attack < Utility) - ascending
+                    int aOrder = GetPhaseOrder(a.node.actionType);
+                    int bOrder = GetPhaseOrder(b.node.actionType);
+                    int compareType = aOrder.CompareTo(bOrder);
+                    if (compareType != 0) return compareType;
+
+                    // 3. Source ID (Player < Enemy) - ascending
+                    return a.node.sourceId.CompareTo(b.node.sourceId);
+                });
+
+                // Execute sorted actions one by one
+                foreach (var nodeWrapper in slotNodes)
                 {
-                    if (node.effectiveSlot == slot)
+                    var action = nodeWrapper.node;
+
+                    // Check if the source character is Stunned or Frozen (skips action execution in this slot)
+                    if (simulatedCharacters.TryGetValue(action.sourceId, out var srcData))
                     {
-                        node.processed = true;
+                        var stun = srcData.statusEffects.Find(s => s.effectType == StatusEffectType.Stun);
+                        var freeze = srcData.statusEffects.Find(s => s.effectType == StatusEffectType.Freeze);
+                        if ((stun != null && stun.duration > 0) || (freeze != null && freeze.duration > 0))
+                        {
+                            string reason = stun != null ? "Stunned" : "Frozen";
+                            simulationLog.Add($"     * [{reason.ToUpper()}] {srcData.name} is {reason}! Skipping action.");
+                            nodeWrapper.processed = true;
+                            continue;
+                        }
                     }
+
+                    // Execute all remaining effects of the card (excluding Delay which ran first)
+                    if (action.effects != null && action.effects.Count > 0)
+                    {
+                        var remainingEffects = action.effects.FindAll(e => e != null && e.Phase != EffectPhase.Delay);
+                        foreach (var effect in remainingEffects)
+                        {
+                            effect.Execute(action.sourceId, action.targetId, action.value, this, slot, action, simulationLog);
+                        }
+                    }
+
+                    nodeWrapper.processed = true;
                 }
             }
 
@@ -472,6 +520,17 @@ namespace ProjectTimeline.Timeline
             }
 
             activeSimNodes = null; // Clean up active reference
+        }
+
+        private int GetPhaseOrder(ActionType type)
+        {
+            switch (type)
+            {
+                case ActionType.Delay: return 0;
+                case ActionType.Defend: return 1;
+                case ActionType.Attack: return 2;
+                default: return 3;
+            }
         }
 
         private void ProcessPhase(int slot, EffectPhase phase, List<string> logs)

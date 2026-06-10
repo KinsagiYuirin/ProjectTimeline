@@ -13,6 +13,7 @@ namespace ProjectTimeline.Timeline
         public string cardId;
         public string cardName;
         public CardType cardType;
+        public CardSpeed cardSpeed;
         [TextArea(2, 5)]
         public string cardDescription;
 

@@ -1620,6 +1620,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 671239259}
   m_CullTransparentMesh: 1
+--- !u!1 &768602947
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 768602948}
+  - component: {fileID: 768602949}
+  m_Layer: 5
+  m_Name: Status Container
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &768602948
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 768602947}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1909194542}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -360, y: 0}
+  m_SizeDelta: {x: 375, y: 55.3}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &768602949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 768602947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 5
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &791958928
 GameObject:
   m_ObjectHideFlags: 0
@@ -2948,6 +3010,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1185277864}
   m_CullTransparentMesh: 1
+--- !u!1 &1201202932
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1201202933}
+  - component: {fileID: 1201202934}
+  m_Layer: 5
+  m_Name: Status Container
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1201202933
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1201202932}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1535829506}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 486, y: 0}
+  m_SizeDelta: {x: 375, y: 55.3}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1201202934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1201202932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 3
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1217027823
 GameObject:
   m_ObjectHideFlags: 0
@@ -3975,6 +4099,7 @@ RectTransform:
   m_Children:
   - {fileID: 948146416}
   - {fileID: 1492280407}
+  - {fileID: 1201202933}
   m_Father: {fileID: 1304985288}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -4872,6 +4997,7 @@ RectTransform:
   m_Children:
   - {fileID: 406508326}
   - {fileID: 1964852999}
+  - {fileID: 768602948}
   m_Father: {fileID: 1304985288}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -5520,6 +5646,9 @@ MonoBehaviour:
   enemyHpFill: {fileID: 1573748500}
   enemyShieldFill: {fileID: 1185277866}
   simulationLogText: {fileID: 928931213}
+  statusIconPrefab: {fileID: 4230840865489579447, guid: 7535fcce92d8ca149888481270261332, type: 3}
+  playerStatusContainer: {fileID: 1201202933}
+  enemyStatusContainer: {fileID: 768602948}
   playerSlotVisualizers:
   - {fileID: 2052149862}
   - {fileID: 1331787013}
@@ -5598,13 +5727,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectTimeline.Timeline.EnemyAIController
   timelineBridge: {fileID: 2132199232}
   turnManager: {fileID: 2132199234}
-  emergencyDefensePool:
-  - {fileID: 11400000, guid: 23720edbe2b99ba4893772b97cf05d58, type: 2}
-  - {fileID: 11400000, guid: 595c5c012bbb9954f94313f96bd1e353, type: 2}
-  fullOffensivePool:
-  - {fileID: 11400000, guid: 8e4c135b6826e7d4b82adbf8695016a4, type: 2}
-  defaultTacticalPool:
-  - {fileID: 11400000, guid: 69520f7fddf9ef5499f8515bf230ee94, type: 2}
+  aiProfile: {fileID: 11400000, guid: aa1bf890090d0a84aa0bcc18be1d6de4, type: 2}
 --- !u!1 &2136825841
 GameObject:
   m_ObjectHideFlags: 0

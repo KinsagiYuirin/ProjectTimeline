@@ -46,6 +46,14 @@ namespace ProjectTimeline.Timeline
         [Space]
         [SerializeField] private TMP_Text simulationLogText;
         [Space]
+        [Header("Status HUD Configuration")]
+        [SerializeField] [Tooltip("Prefab of the status effect icon displaying the sprite and duration.")]
+        private GameObject statusIconPrefab;
+        [SerializeField] [Tooltip("Layout container holding player's status effect icons.")]
+        private Transform playerStatusContainer;
+        [SerializeField] [Tooltip("Layout container holding enemy's status effect icons.")]
+        private Transform enemyStatusContainer;
+        [Space]
         [Header("Timeline Slots Visualizers")]
         [SerializeField] private List<TimelineSlotVisualizer> playerSlotVisualizers = new List<TimelineSlotVisualizer>();
         [SerializeField] private List<TimelineSlotVisualizer> enemySlotVisualizers = new List<TimelineSlotVisualizer>();
@@ -205,6 +213,7 @@ namespace ProjectTimeline.Timeline
                 clonedNode.startSlot = setup.startSlot;
                 clonedNode.effectiveSlot = setup.startSlot;
                 clonedNode.cardType = setup.cardBlueprint.cardType; // Keep cardType synchronized!
+                clonedNode.cardSpeed = setup.cardBlueprint.cardSpeed; // Keep cardSpeed synchronized!
 
                 // Generate or assign a unique instance ID
                 if (string.IsNullOrEmpty(setup.runtimeInstanceId))
@@ -287,6 +296,8 @@ namespace ProjectTimeline.Timeline
                 if (playerShieldText != null) playerShieldText.text = $"Shield: {player.shield}";
                 if (playerHpFill != null) playerHpFill.fillAmount = player.maxHp > 0 ? (float)player.currentHp / player.maxHp : 0f;
                 if (playerShieldFill != null) playerShieldFill.fillAmount = player.maxHp > 0 ? Mathf.Clamp01((float)player.shield / player.maxHp) : 0f;
+
+                RefreshStatusContainer(playerStatusContainer, player.statusEffects);
             }
 
             // Sync Enemy UI
@@ -296,6 +307,46 @@ namespace ProjectTimeline.Timeline
                 if (enemyShieldText != null) enemyShieldText.text = $"Shield: {enemy.shield}";
                 if (enemyHpFill != null) enemyHpFill.fillAmount = enemy.maxHp > 0 ? (float)enemy.currentHp / enemy.maxHp : 0f;
                 if (enemyShieldFill != null) enemyShieldFill.fillAmount = enemy.maxHp > 0 ? Mathf.Clamp01((float)enemy.shield / enemy.maxHp) : 0f;
+
+                RefreshStatusContainer(enemyStatusContainer, enemy.statusEffects);
+            }
+        }
+
+        private void RefreshStatusContainer(Transform container, List<StatusEffectInstance> statuses)
+        {
+            if (container == null) return;
+
+            // 1. Clear old icons safely in both Edit Mode and Play Mode
+            List<Transform> children = new List<Transform>();
+            foreach (Transform child in container)
+            {
+                if (child != null) children.Add(child);
+            }
+            foreach (var child in children)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(child.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
+            }
+
+            // 2. Spawn new status icons
+            if (statusIconPrefab == null || statuses == null) return;
+
+            foreach (var status in statuses)
+            {
+                if (status == null || status.duration <= 0) continue;
+
+                GameObject iconObj = Instantiate(statusIconPrefab, container);
+                StatusEffectIconUI iconUI = iconObj.GetComponent<StatusEffectIconUI>();
+                if (iconUI != null)
+                {
+                    iconUI.Setup(status);
+                }
             }
         }
 

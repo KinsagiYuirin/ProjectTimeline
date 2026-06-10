@@ -181,7 +181,7 @@ namespace ProjectTimeline.Timeline
                 // Pass the instance ID and player-ownership flag so the icon can
                 // identify itself during recall and validate click permissions.
                 bool playerOwned = action.sourceId == CharacterID.Player;
-                iconUI.Setup(displayName, displayIcon, action.id, playerOwned);
+                iconUI.Setup(displayName, displayIcon, action.id, playerOwned, action.cardSpeed);
             }
         }
     }

@@ -17,6 +17,7 @@ namespace ProjectTimeline.Timeline
         [Header("UI Component Bindings")]
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private Image iconImage;
+        [SerializeField] private TMP_Text speedText;
 
         [Header("Recall Feedback (optional)")]
         [SerializeField]
@@ -68,7 +69,8 @@ namespace ProjectTimeline.Timeline
         /// Pass <c>true</c> for player-played cards (recall is allowed).
         /// Pass <c>false</c> for enemy telegraphs (click is silently ignored).
         /// </param>
-        public void Setup(string displayName, Sprite icon, string instanceId, bool playerOwned = true)
+        /// <param name="speed">The priority card speed.</param>
+        public void Setup(string displayName, Sprite icon, string instanceId, bool playerOwned = true, CardSpeed speed = CardSpeed.Normal)
         {
             cardInstanceId = instanceId;
             isPlayerCard   = playerOwned;
@@ -89,6 +91,11 @@ namespace ProjectTimeline.Timeline
                 {
                     iconImage.enabled = false;
                 }
+            }
+
+            if (speedText != null)
+            {
+                speedText.text = speed.ToString();
             }
 
             // Hide hover highlight at rest
