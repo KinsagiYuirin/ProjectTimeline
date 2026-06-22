@@ -72,11 +72,10 @@ namespace ProjectTimeline.Timeline
         [SerializeField] private float flashDuration = 0.3f;
 
         // MVVM Core references
-        private TimelineModel model;
         private TimelineViewModel viewModel;
 
         // Active flash coroutines per avatar to prevent overlapping conflicts
-        private Dictionary<SpriteRenderer, Coroutine> activeFlashes = new Dictionary<SpriteRenderer, Coroutine>();
+        private readonly Dictionary<SpriteRenderer, Coroutine> activeFlashes = new Dictionary<SpriteRenderer, Coroutine>();
 
         #region Unity Lifecycle
 
@@ -143,8 +142,7 @@ namespace ProjectTimeline.Timeline
         /// </summary>
         private void InitializeMVVM()
         {
-            model = new TimelineModel();
-            viewModel = new TimelineViewModel(model);
+            viewModel = new TimelineViewModel();
 
             // Subscribe view updates to the ViewModel's update notification event
             viewModel.OnTimelineUpdated += OnTimelineSimulationUpdated;
@@ -157,11 +155,11 @@ namespace ProjectTimeline.Timeline
         {
             get
             {
-                if (model == null)
+                if (viewModel == null)
                 {
                     InitializeMVVM();
                 }
-                return model;
+                return viewModel.Model;
             }
         }
 
@@ -179,64 +177,12 @@ namespace ProjectTimeline.Timeline
         /// </summary>
         private void RunSimulation()
         {
-            if (viewModel == null || model == null)
+            if (viewModel == null)
             {
                 InitializeMVVM();
             }
 
-            // Sync baseline characters
-            model.baselineCharacters.Clear();
-            foreach (var character in baselineCharacters)
-            {
-                if (character != null && !string.IsNullOrEmpty(character.id))
-                {
-                    if (System.Enum.TryParse<CharacterID>(character.id, true, out CharacterID characterEnum))
-                    {
-                        model.baselineCharacters[characterEnum] = character;
-                    }
-                }
-            }
-
-            // Sync actions (Segregate by sourceId to identify Player vs Enemy actions)
-            model.enemyActions.Clear();
-            model.playerActions.Clear();
-            for (int i = 0; i < initialTimelineActions.Count; i++)
-            {
-                var setup = initialTimelineActions[i];
-                if (setup == null || setup.cardBlueprint == null) continue;
-
-                // Deep copy/clone the inner payload
-                ActionNodeData clonedNode = setup.cardBlueprint.actionBlueprint.Clone();
-
-                // Ensure a valid ID exists
-                clonedNode.id = string.IsNullOrEmpty(clonedNode.id) ? setup.cardBlueprint.cardId : clonedNode.id;
-
-                // Inject the runtime parameters from the struct
-                clonedNode.startSlot = setup.startSlot;
-                clonedNode.effectiveSlot = setup.startSlot;
-                clonedNode.cardType = setup.cardBlueprint.cardType; // Keep cardType synchronized!
-                clonedNode.cardSpeed = setup.cardBlueprint.cardSpeed; // Keep cardSpeed synchronized!
-
-                // Generate or assign a unique instance ID
-                if (string.IsNullOrEmpty(setup.runtimeInstanceId))
-                {
-                    setup.runtimeInstanceId = clonedNode.id + "_" + i + "_" + System.Guid.NewGuid().ToString().Substring(0, 8);
-                }
-                clonedNode.id = setup.runtimeInstanceId;
-
-                // Sort and distribute based on finalized sourceId
-                if (clonedNode.sourceId == CharacterID.Player)
-                {
-                    model.playerActions.Add(clonedNode);
-                }
-                else
-                {
-                    model.enemyActions.Add(clonedNode);
-                }
-            }
-
-            // Scrub the playhead to trigger simulation recalculation
-            viewModel.ScrubToSlot(targetScrubSlot);
+            viewModel.ProcessAndSimulate(baselineCharacters, initialTimelineActions, targetScrubSlot);
         }
 
         #endregion
@@ -453,7 +399,7 @@ namespace ProjectTimeline.Timeline
 
         private void UpdateSlotVisualizers()
         {
-            if (model == null) return;
+            if (viewModel == null) return;
 
             // Ensure lists are initialized
             if (playerSlotVisualizers == null) playerSlotVisualizers = new List<TimelineSlotVisualizer>();
@@ -523,8 +469,8 @@ namespace ProjectTimeline.Timeline
                 if (vis != null)
                 {
                     int index = vis.slotIndex;
-                    List<ActionNodeData> playerActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId == CharacterID.Player);
-                    vis.RefreshSlot(playerActions, presenter, initialTimelineActions);
+                    List<ActionNodeData> playerActions = viewModel.GetSimulatedActionsForSlot(vis.slotIndex, CharacterID.Player, exactMatch: true);
+                    vis.RefreshSlot(playerActions, initialTimelineActions);
                 }
             }
 
@@ -535,8 +481,8 @@ namespace ProjectTimeline.Timeline
                 if (vis != null)
                 {
                     int index = vis.slotIndex;
-                    List<ActionNodeData> enemyActions = model.simulatedActions.FindAll(a => a.effectiveSlot == index && a.sourceId != CharacterID.Player);
-                    vis.RefreshSlot(enemyActions, presenter, initialTimelineActions);
+                    List<ActionNodeData> enemyActions = viewModel.GetSimulatedActionsForSlot(vis.slotIndex, CharacterID.Player, exactMatch: false);
+                    vis.RefreshSlot(enemyActions, initialTimelineActions);
                 }
             }
         }

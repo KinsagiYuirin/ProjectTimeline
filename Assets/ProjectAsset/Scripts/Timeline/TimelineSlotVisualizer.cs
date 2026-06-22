@@ -65,16 +65,9 @@ namespace ProjectTimeline.Timeline
                 }
             }
         }
-
-        /// <summary>
-        /// Clears old visual representations and spawns a miniature icon for each action scheduled at this slot.
-        /// </summary>
-        /// <param name="actions">The list of action nodes resolving at this slot.</param>
-        /// <param name="presenter">Reference to the presenter broker to resolve played card blueprints.</param>
-        /// <param name="inspectorSetups">Optional list of inspector action setups to retrieve static card details.</param>
-        public void RefreshSlot(List<ActionNodeData> actions, CardTimelinePresenter presenter, List<TimelineActionSetup> inspectorSetups = null)
+        
+        public void RefreshSlot(List<ActionNodeData> actions, List<TimelineActionSetup> inspectorSetups = null)
         {
-            // Clear current spawned icons safely in both Play Mode and Edit Mode
             ClearContainer(mainActionContainer);
             ClearContainer(freeActionContainer);
 
@@ -93,57 +86,7 @@ namespace ProjectTimeline.Timeline
                 Sprite displayIcon = null;
                 bool foundInfo = false;
 
-                // 1. Search player collections (if source is player)
-                if (action.sourceId == CharacterID.Player && presenter != null)
-                {
-                    RuntimeCardInstance card = null;
-
-                    // Search Discard Pile (main location for played cards)
-                    foreach (var c in presenter.Collection.DiscardPile)
-                    {
-                        if (c.instanceId == action.id)
-                        {
-                            card = c;
-                            break;
-                        }
-                    }
-
-                    // Search Hand (fallback)
-                    if (card == null)
-                    {
-                        foreach (var c in presenter.Collection.Hand)
-                        {
-                            if (c.instanceId == action.id)
-                            {
-                                card = c;
-                                break;
-                            }
-                        }
-                    }
-
-                    // Search Deck (fallback)
-                    if (card == null)
-                    {
-                        foreach (var c in presenter.Collection.Deck)
-                        {
-                            if (c.instanceId == action.id)
-                            {
-                                card = c;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (card != null)
-                    {
-                        displayName = card.blueprint.cardName;
-                        displayIcon = card.blueprint.icon;
-                        foundInfo = true;
-                    }
-                }
-
-                // 2. Search inspector setups (fallback for both player and enemy initial setups)
-                if (!foundInfo && inspectorSetups != null)
+                if (inspectorSetups != null)
                 {
                     foreach (var setup in inspectorSetups)
                     {
@@ -151,8 +94,7 @@ namespace ProjectTimeline.Timeline
                         {
                             bool isMatch = setup.runtimeInstanceId == action.id ||
                                            setup.cardBlueprint.actionBlueprint.id == action.id ||
-                                           action.id.Contains(setup.cardBlueprint.cardId) ||
-                                           action.id.Contains(setup.cardBlueprint.actionBlueprint.id);
+                                           action.id.Contains(setup.cardBlueprint.cardId);
 
                             if (isMatch)
                             {
@@ -165,21 +107,11 @@ namespace ProjectTimeline.Timeline
                     }
                 }
 
-                // 3. Fallbacks if name/icon not found
                 if (!foundInfo)
                 {
-                    if (action.sourceId == CharacterID.Player)
-                    {
-                        displayName = $"Player {action.actionType}";
-                    }
-                    else
-                    {
-                        displayName = $"Enemy {action.actionType} ({action.value})";
-                    }
+                    displayName = action.sourceId == CharacterID.Player ? $"Player {action.actionType}" : $"Enemy {action.actionType} ({action.value})";
                 }
 
-                // Pass the instance ID and player-ownership flag so the icon can
-                // identify itself during recall and validate click permissions.
                 bool playerOwned = action.sourceId == CharacterID.Player;
                 iconUI.Setup(displayName, displayIcon, action.id, playerOwned, action.cardSpeed);
             }

@@ -15,6 +15,7 @@ MonoBehaviour:
   cardId: 1
   cardName: Get Freeze
   cardType: 0
+  cardSpeed: 0
   cardDescription: Get Target Freeze effect
   energyCost: 2
   icon: {fileID: 7178926463091282321, guid: 069ec23099623e24ab1dc4a75b8e187a, type: 3}
@@ -32,3 +33,4 @@ MonoBehaviour:
     comboEffects: []
     comboValueMultiplier: 1
     comboValueBonus: 0
+    cardSpeed: 1

@@ -6,14 +6,30 @@
   <component name="ChangeListManager">
     <list default="true" id="43953c56-f3ba-4157-a124-62fcfedcb6f3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.ProjectTimeline/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ProjectTimeline/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Arts/Test Asset/130129933_p0.jpg.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Arts/Test Asset/130129933_p0.jpg.meta" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardItem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardItem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardViewManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Card System/GameplayCardViewManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/Enemy test/NewCardBlueprint 1.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/SO/Enemy test/NewCardBlueprint 1.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/ApplyStatusEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/ApplyStatusEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/CombatEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/CombatEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/DamageEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/DamageEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/DelayEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/DelayEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/DrawCardEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/DrawCardEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/HealEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/HealEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/ShieldEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/Effects/ShieldEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/StatusEffectIconUI.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/StatusEffectIconUI.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/StatusEffectSO.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/StatusEffectSO.cs.meta" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineInspectorBridge.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineInspectorBridge.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/CardBattleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/CardBattleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineSlotVisualizer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineSlotVisualizer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/ProjectAsset/Scripts/Timeline/TimelineViewModel.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,7 +175,7 @@
       <workItem from="1780027659458" duration="2243000" />
       <workItem from="1780117710169" duration="5950000" />
       <workItem from="1780285442461" duration="2515000" />
-      <workItem from="1782109520991" duration="7521000" />
+      <workItem from="1782109520991" duration="8856000" />
     </task>
     <servers />
   </component>

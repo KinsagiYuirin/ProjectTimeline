@@ -17,12 +17,12 @@ namespace ProjectTimeline.Timeline
 
         [Header("Hover Feedback Settings")]
         [SerializeField] private float hoverScaleFactor = 1.15f;
-        [SerializeField] private float hoverYOffset = 40f; // ระยะที่การ์ดจะยกลอยขึ้นเมื่อโดนชี้
+        [SerializeField] private float hoverYOffset = 40f;
         [SerializeField] private float tweenDuration = 0.15f;
 
         public RuntimeCardInstance CardInstance { get; private set; }
         public bool IsPlayed { get; set; }
-        public bool IsDragging { get; private set; } // เปิดตัวแปรไว้รองรับตัว Layout Manager
+        public bool IsDragging { get; private set; } 
 
         private Transform originalParent;
         private int originalSiblingIndex;
@@ -44,8 +44,6 @@ namespace ProjectTimeline.Timeline
             originalScale = transform.localScale;
             mainCanvas = GetComponentInParent<Canvas>();
         }
-
-        // 🔥 ลบฟังก์ชัน Update() ตัวเก่าทิ้งไปเลยค่ะ! เราจะไม่รันลูป Lerp ทุกเฟรมให้เปลืองพลังงานเครื่องอีกแล้ว
 
         public void Setup(RuntimeCardInstance instance)
         {
@@ -78,7 +76,6 @@ namespace ProjectTimeline.Timeline
                 canvasGroup.alpha = 0.75f;
             }
 
-            // ตอนดึงการ์ดลาก ให้ขยายขนาดค้างไว้แบบสมูท
             transform.DOKill();
             transform.DOScale(originalScale * hoverScaleFactor, tweenDuration);
         }
@@ -117,7 +114,7 @@ namespace ProjectTimeline.Timeline
                 canvasGroup.alpha = 1f;
             }
 
-            ForceResetVisuals(); // หดขนาดกลับสู่ความจริง
+            ForceResetVisuals();
 
             if ((mainCanvas != null && transform.parent == mainCanvas.transform) || transform.parent != originalParent)
             {
@@ -148,10 +145,8 @@ namespace ProjectTimeline.Timeline
         {
             if (IsPlayed || IsDragging) return;
 
-            // 🔥 ไม้ตาย: สั่งเด้งเคลียร์การ์ดใบอื่นๆ บนมือให้หดกลับปกติทันที ป้องกันปัญหารูดเมาส์ไวแล้วค้างคู่
             ResetOtherCardsInHand();
 
-            // รันแอนิเมชันยกลอยขึ้นแกน Y + ขยายขนาดแบบสปริงนุ่มๆ ด้วย DOTween
             transform.DOKill();
             transform.DOScale(originalScale * hoverScaleFactor, tweenDuration).SetEase(Ease.OutQuad);
             
@@ -166,13 +161,9 @@ namespace ProjectTimeline.Timeline
         {
             if (IsPlayed || IsDragging) return;
 
-            // หดกลับลงพิกัดปกติอย่างนุ่มนวล
             ForceResetVisuals();
         }
 
-        /// <summary>
-        /// บังคับให้การ์ดใบนี้เคลียร์แอนิเมชันค้างทั้งหมดและหดกลับสู่สภาพปกติ
-        /// </summary>
         public void ForceResetVisuals()
         {
             transform.DOKill();
@@ -189,7 +180,6 @@ namespace ProjectTimeline.Timeline
         {
             if (transform.parent == null) return;
 
-            // ลูปสั่งการลูกทุกคนใน Hand Panel ยกเว้นตัวมันเอง ให้หดตัวกลับทันที
             foreach (Transform child in transform.parent)
             {
                 if (child != null && child != transform)
