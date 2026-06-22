@@ -68,32 +68,81 @@ namespace ProjectTimeline.Timeline
             }
         }
 
-        /// <summary>
-        /// Event listener to rebuild hand visual prefabs when the hand collection changes.
-        /// </summary>
         private void OnHandChanged(List<RuntimeCardInstance> currentHand)
         {
-            if (handPanel != null)
-            {
-                // Clear existing visual card objects in the hand
-                foreach (Transform child in handPanel)
-                {
-                    Destroy(child.gameObject);
-                }
+            if (handPanel == null) return;
 
-                // Spawn a new visual prefab for each card instance in hand
-                foreach (var cardInstance in currentHand)
+            // 1. สแกนและจับคู่การ์ด UI ปัจจุบันบนหน้าจอ เก็บลง Dictionary โดยใช้ instanceId เป็นคีย์
+            Dictionary<string, GameplayCardItem> existingUI = new Dictionary<string, GameplayCardItem>();
+            foreach (Transform child in handPanel)
+            {
+                if (child != null)
                 {
+                    GameplayCardItem cardItem = child.GetComponent<GameplayCardItem>();
+                    if (cardItem != null && cardItem.CardInstance != null)
+                    {
+                        existingUI[cardItem.CardInstance.instanceId] = cardItem;
+                    }
+                }
+            }
+
+            // สร้าง HashSet ของรหัสการ์ดในข้อมูลปัจจุบันเพื่อความรวดเร็วในการค้นหา
+            HashSet<string> currentHandIds = new HashSet<string>();
+            foreach (var card in currentHand)
+            {
+                currentHandIds.Add(card.instanceId);
+            }
+
+            // 2. ตรวจสอบและทำลายเฉพาะการ์ด UI ที่ถูกเล่นไปแล้ว (ไม่อยู่ในคอลเลกชัน currentHand)
+            List<string> idsToRemove = new List<string>();
+            foreach (var kvp in existingUI)
+            {
+                if (!currentHandIds.Contains(kvp.Key))
+                {
+                    idsToRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var id in idsToRemove)
+            {
+                GameplayCardItem itemToDestroy = existingUI[id];
+                itemToDestroy.transform.SetParent(null); // ปลดแม่เพื่อป้องกันปัญหานับจำนวนลูกพลาดในเฟรมนี้
+                Destroy(itemToDestroy.gameObject);
+                existingUI.Remove(id); // ลบออกจาก Dictionary คลังชั่วคราว
+            }
+
+            // 3. ลูปจัดเรียงการ์ดที่เหลือ และสร้างใหม่เฉพาะการ์ดที่ยังไม่มีตัวตน
+            for (int i = 0; i < currentHand.Count; i++)
+            {
+                var cardInstance = currentHand[i];
+
+                // ถ้าการ์ดใบนี้มีตัวตนอยู่บน UI อยู่แล้ว
+                if (existingUI.TryGetValue(cardInstance.instanceId, out GameplayCardItem existingCard))
+                {
+                    // ไม่ต้องทำลาย ไม่ต้องสร้างใหม่! แค่ปรับลำดับ Index ให้ตรงตามแถวปัจจุบันพอค่ะ
+                    existingCard.transform.SetSiblingIndex(i);
+                }
+                else
+                {
+                    // ถ้าเป็นการ์ดใบใหม่เอี่ยม (เพิ่งจั่วได้ หรือเพิ่งดึง Recall กลับมา) ค่อยสร้างพรีแฟบขึ้นมาค่ะ
                     if (cardPrefab != null)
                     {
                         GameObject cardObj = Instantiate(cardPrefab, handPanel);
-                        GameplayCardItem cardItem = cardObj.GetComponent<GameplayCardItem>();
-                        if (cardItem != null)
+                        GameplayCardItem newCardItem = cardObj.GetComponent<GameplayCardItem>();
+                        if (newCardItem != null)
                         {
-                            cardItem.Setup(cardInstance);
+                            newCardItem.Setup(cardInstance);
+                            newCardItem.transform.SetSiblingIndex(i); // จัดคิวให้อยู่ในตำแหน่งที่ถูกต้อง
                         }
                     }
                 }
+            }
+
+            // 4. สั่งสั่งการระบบ Custom Layout สไลด์การ์ดขยับเข้าที่อย่างนุ่มนวล
+            var layoutManager = handPanel.GetComponent<HandCardLayoutManager>();
+            if (layoutManager != null)
+            {
+                layoutManager.UpdateLayout();
             }
         }
 

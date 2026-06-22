@@ -15,6 +15,7 @@ MonoBehaviour:
   cardId: 2
   cardName: Attack
   cardType: 0
+  cardSpeed: 0
   cardDescription: Attack 10 Damage
   energyCost: 0
   icon: {fileID: 6292415348255532922, guid: 60f4612c448a1664b90ac7134e391ae0, type: 3}
@@ -32,3 +33,4 @@ MonoBehaviour:
     comboEffects: []
     comboValueMultiplier: 1
     comboValueBonus: 0
+    cardSpeed: 0

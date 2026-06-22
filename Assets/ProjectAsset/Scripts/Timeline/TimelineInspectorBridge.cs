@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using ProjectAsset.Scripts.Util;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -45,6 +46,7 @@ namespace ProjectTimeline.Timeline
         [SerializeField] private Image enemyShieldFill;
         [Space]
         [SerializeField] private TMP_Text simulationLogText;
+        [SerializeField] private GameObject damagePopupPrefab;  
         [Space]
         [Header("Status HUD Configuration")]
         [SerializeField] [Tooltip("Prefab of the status effect icon displaying the sprite and duration.")]
@@ -393,6 +395,12 @@ namespace ProjectTimeline.Timeline
                             {
                                 TriggerFlash(sourceSR, attackFlashColor);
                                 TriggerFlash(targetSR, damageFlashColor);
+                                
+                                if (statusIconPrefab != null && targetSR != null)
+                                {
+                                    var popupObj = Instantiate(damagePopupPrefab, targetSR.transform.position + Vector3.up, Quaternion.identity);
+                                    popupObj.GetComponent<DamagePopup>().Setup(action.value);
+                                }
                             }
                             else if (effect is ShieldEffect)
                             {
